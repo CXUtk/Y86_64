@@ -2,7 +2,7 @@
 #include "Environment.h"
 #include <string.h>
 
-char		Memory[MAX_MEMORY_ADDRESS];
+char Memory[MAX_MEMORY_ADDRESS];
 
 
 Environment::Environment()
