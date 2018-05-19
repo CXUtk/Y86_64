@@ -77,7 +77,7 @@ void Environment::SetMem(ADDRESS address, unsigned char * buffer, size_t num)
 void Environment::DisplayMem(ADDRESS address, size_t num)
 {
 	for (size_t i = 0; i < num; i++) {
-		fprintf(stdout, "%.2x " , Memory[address + i]);
+		fprintf(stdout, "%.2x ", Memory[address + i]);
 	}
 	fprintf(stdout, "\n");
 	fflush(stdout);
