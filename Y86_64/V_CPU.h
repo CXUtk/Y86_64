@@ -22,11 +22,17 @@ private:
 	Register			_commonRegs[NUM_OF_REGISTER];
 	ExecutionState *	_state;
 
-	std::unordered_map<ISA_ByteCode, Exex_func>		_execFuncTable;
+	std::unordered_map<ISA_OPCode, Exex_func>		_execFuncTable;
 
+	ADDRESS Stop(ADDRESS, void *);
 	ADDRESS SysCall(ADDRESS, void *);
 	ADDRESS PushI(ADDRESS, void *);
+	ADDRESS Push(ADDRESS, void *);
 	ADDRESS Pop(ADDRESS, void *);
+	ADDRESS Nop(ADDRESS, void *);
+	ADDRESS MovQuadR2R(ADDRESS, void *);
+	ADDRESS MovQuadI2R(ADDRESS, void *);
+	ADDRESS MovQuadR2M(ADDRESS, void *);
 	uint64_t internal_pop();
 
 	void Init();

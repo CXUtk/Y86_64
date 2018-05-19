@@ -12,13 +12,17 @@ void stop_exec(void * args)
 
 void invalid_addr(void * args)
 {
+	ExecutionState * state = (ExecutionState *)args;
 	fprintf(stdout, "%s\n", "CPU: 地址无效！");
+	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
 	stop_exec(args);
 }
 
 void invalid_ins(void * args)
 {
+	ExecutionState * state = (ExecutionState *)args;
 	fprintf(stdout, "%s\n", "CPU: 无法识别指令！");
+	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
 	stop_exec(args);
 }
 
@@ -95,11 +99,11 @@ void Environment::init()
 	_vCPU = new V_CPU(_state);
 
 
-	_globalStateTable.insert(std::make_pair<>(PS_HALT, stop_exec));
-	_globalStateTable.insert(std::make_pair<>(PS_ADR, invalid_addr));
-	_globalStateTable.insert(std::make_pair<>(PS_INS, invalid_ins));
-	_globalStateTable.insert(std::make_pair<>(PS_STACK_OVERFLOW, stack_overflow));
-	_globalStateTable.insert(std::make_pair<>(PS_STACK_UNDERFLOW, stack_underflow));
+	_globalStateTable.insert(std::make_pair(PS_HALT, stop_exec));
+	_globalStateTable.insert(std::make_pair(PS_ADR, invalid_addr));
+	_globalStateTable.insert(std::make_pair(PS_INS, invalid_ins));
+	_globalStateTable.insert(std::make_pair(PS_STACK_OVERFLOW, stack_overflow));
+	_globalStateTable.insert(std::make_pair(PS_STACK_UNDERFLOW, stack_underflow));
 }
 
 

@@ -5,13 +5,19 @@
 typedef uint64_t ADDRESS;
 
 // Y86_64 指令集常量
-const int MAX_ADDRESS_BYTES = 8;
+
+// 最大寻址字节数
+const int MAX_ADDRESS_BYTES = sizeof(uint64_t);
 const int MAX_BYTES = 2 + MAX_ADDRESS_BYTES;
 const int NUM_OF_REGISTER = 8;
+const int QUAD_BYTES = 8;
+const int DWORD_BYTES = 4;
+const int WORD_BYTES = 2;
+const int SINGLE_BYTES = 1;
 
 const ADDRESS INVALID_ADDR = 0x00000;
 
-// 1MB内存空间
+// 1MB最大内存空间
 const ADDRESS MAX_MEMORY_ADDRESS = 0xFFFFF;
 const ADDRESS START_ADDRESS = 0x10000;
 
@@ -19,17 +25,29 @@ const ADDRESS START_ADDRESS = 0x10000;
 const ADDRESS INIT_STACK_POS = 0x80000;
 const ADDRESS MAX_STACK_GROW = 0x04000;
 
+// Y86_64 寄存器
+typedef int64_t Register;
+
 typedef void (*fpState)(void *);
 
 // Y86_64 字节码
-enum ISA_ByteCode
+enum ISA_OPCode
 {
 	STOP = 0x00,
 	NOP = 0x10,
+	// 1 + 1（寄存器）
 	RRMOV = 0x20,
+	// 1 + 1（寄存器）+ 8（立即数）
 	IRMOV = 0x30,
-	RMMOV = 0x40,
-	MRMOV = 0x50,
+	// 1 + 1（寄存器）+ 8（内存地址）
+	RMMOVQ = 0x40,
+	RMMOVD = 0x41,
+	RMMOVW = 0x42,
+	RMMOVB = 0x43,
+	MRMOVQ = 0x50,
+	MRMOVD = 0x51,
+	MRMOVW = 0x52,
+	MRMOVB = 0x53,
 	OP_ADD = 0x60,
 	OP_SUB = 0x61,
 	OP_MUL = 0x62,
@@ -40,6 +58,8 @@ enum ISA_ByteCode
 	OP_XOR = 0x67,
 	OP_SHR = 0x68,
 	OP_SHL = 0x69,
+	OP_INC = 0x6A,
+	OP_DEC = 0x6B,
 	JMP = 0x70,
 	JLE = 0x71,
 	JL = 0x72,
@@ -57,7 +77,7 @@ enum ISA_ByteCode
 };
 
 // Y86_64 寄存器代码
-enum ISA_REGISTER
+enum ISA_Register
 {
 	RAX = 0x0,
 	RCX = 0x1,
@@ -70,10 +90,7 @@ enum ISA_REGISTER
 	NOREG = 0x8,
 };
 
-// Y86_64 寄存器
-typedef int64_t Register;
-
-enum ProgramStatus
+enum ProgramState
 {
 	PS_OK = 0x0,
 	PS_HALT = 0x1,

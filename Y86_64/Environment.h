@@ -25,7 +25,7 @@ private:
 	ExecutionState *	_state;
 	V_CPU *				_vCPU;
 
-	std::unordered_map<ProgramStatus, fpState>			_globalStateTable;
+	std::unordered_map<ProgramState, fpState>			_globalStateTable;
 
 	void init();
 	void CheckState();

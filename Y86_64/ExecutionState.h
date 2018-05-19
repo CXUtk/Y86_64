@@ -5,7 +5,7 @@
 typedef struct {
 	ADDRESS			_programCounter;
 	Register		_conditionCode;
-	ProgramStatus	_programState;
+	ProgramState	_programState;
 } ExecutionState;
 
 extern unsigned char Memory[MAX_MEMORY_ADDRESS];
