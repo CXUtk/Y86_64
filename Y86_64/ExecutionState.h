@@ -8,6 +8,6 @@ typedef struct {
 	ProgramStatus	_programState;
 } ExecutionState;
 
-extern char		Memory[MAX_MEMORY_ADDRESS];
+extern unsigned char Memory[MAX_MEMORY_ADDRESS];
 
 #endif

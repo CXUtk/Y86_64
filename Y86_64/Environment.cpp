@@ -2,8 +2,37 @@
 #include "Environment.h"
 #include <string.h>
 
-char Memory[MAX_MEMORY_ADDRESS];
+unsigned char Memory[MAX_MEMORY_ADDRESS];
 
+void stop_exec(void * args)
+{
+	fprintf(stdout, "%s\n", "CPU: 执行已经停止！");
+	getchar();
+}
+
+void invalid_addr(void * args)
+{
+	fprintf(stdout, "%s\n", "CPU: 地址无效！");
+	stop_exec(args);
+}
+
+void invalid_ins(void * args)
+{
+	fprintf(stdout, "%s\n", "CPU: 无法识别指令！");
+	stop_exec(args);
+}
+
+void stack_overflow(void * args)
+{
+	fprintf(stdout, "%s\n", "CPU: 栈空间溢出（Stack Overflow）！");
+	stop_exec(args);
+}
+
+void stack_underflow(void * args)
+{
+	fprintf(stdout, "%s\n", "CPU: 栈空间向下溢出（Stack Underflow）！");
+	stop_exec(args);
+}
 
 Environment::Environment()
 {
@@ -17,44 +46,41 @@ Environment::~Environment()
 	delete _state;
 }
 
-int64_t Environment::GetData(ADDRESS address)
-{
-	if (address <= 0 || address >= MAX_ADDRESS_BYTES) {
-		_state->_programState = PS_ADR;
-		return -1;
-	}
-	return Memory[address];
-}
-
-void Environment::SetData(ADDRESS address, int64_t value)
-{
-	if (address <= 0 || address >= MAX_ADDRESS_BYTES) {
-		_state->_programState = PS_ADR;
-		return;
-	}
-	Memory[address] = value;
-}
-
-void Environment::StopExec()
-{
-
-	fprintf(stdout, "%s\n", "CPU: EXECUTION Stopped!");
-	getchar();
-}
-
 void Environment::Start()
 {
 	while (_state->_programState == PS_OK) {
-		_vCPU->Execute();
+		ADDRESS pc = _vCPU->Execute();
+		_state->_programCounter = pc;
+		CheckState();
 	}
-
-	if (_state->_programState == PS_HALT) {
-		StopExec();
+	DisplayMem(START_ADDRESS, 128);
+	if (_globalStateTable.find(_state->_programState) != _globalStateTable.end()) {
+		if (_globalStateTable[_state->_programState]) {
+			_globalStateTable[_state->_programState](_state);
+		}
 	}
 }
 
-void Environment::Load(char * buffer, size_t num)
+void Environment::Load(unsigned char * buffer, size_t num)
 {
+}
+
+void Environment::SetMem(ADDRESS address, unsigned char * buffer, size_t num)
+{
+	if (address + num >= MAX_MEMORY_ADDRESS || address == 0) {
+		_state->_programState = PS_ADR;
+		return;
+	}
+	memcpy(Memory + address, buffer, num);
+}
+
+void Environment::DisplayMem(ADDRESS address, size_t num)
+{
+	for (size_t i = 0; i < num; i++) {
+		fprintf(stdout, "%.2x " , Memory[address + i]);
+	}
+	fprintf(stdout, "\n");
+	fflush(stdout);
 }
 
 void Environment::init()
@@ -67,4 +93,19 @@ void Environment::init()
 	_state->_programCounter = START_ADDRESS;
 
 	_vCPU = new V_CPU(_state);
+
+
+	_globalStateTable.insert(std::make_pair<>(PS_HALT, stop_exec));
+	_globalStateTable.insert(std::make_pair<>(PS_ADR, invalid_addr));
+	_globalStateTable.insert(std::make_pair<>(PS_INS, invalid_ins));
+	_globalStateTable.insert(std::make_pair<>(PS_STACK_OVERFLOW, stack_overflow));
+	_globalStateTable.insert(std::make_pair<>(PS_STACK_UNDERFLOW, stack_underflow));
+}
+
+
+void Environment::CheckState()
+{
+	if (_state->_programCounter >= MAX_MEMORY_ADDRESS || _state->_programCounter == 0) {
+		_state->_programState = PS_ADR;
+	}
 }

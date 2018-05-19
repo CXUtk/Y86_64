@@ -2,14 +2,24 @@
 #define Y86_64_ISA_H
 #include <inttypes.h>
 
-typedef unsigned int ADDRESS;
+typedef uint64_t ADDRESS;
 
 // Y86_64 指令集常量
-const int MAX_ADDRESS_BYTES = 4;
+const int MAX_ADDRESS_BYTES = 8;
 const int MAX_BYTES = 2 + MAX_ADDRESS_BYTES;
 const int NUM_OF_REGISTER = 8;
-const ADDRESS MAX_MEMORY_ADDRESS = 0xFFFF;
-const ADDRESS START_ADDRESS = 0x1000;
+
+const ADDRESS INVALID_ADDR = 0x00000;
+
+// 1MB内存空间
+const ADDRESS MAX_MEMORY_ADDRESS = 0xFFFFF;
+const ADDRESS START_ADDRESS = 0x10000;
+
+// 栈的位置
+const ADDRESS INIT_STACK_POS = 0x80000;
+const ADDRESS MAX_STACK_GROW = 0x04000;
+
+typedef void (*fpState)(void *);
 
 // Y86_64 字节码
 enum ISA_ByteCode
@@ -40,6 +50,7 @@ enum ISA_ByteCode
 	CALL = 0x80,
 	RET = 0x90,
 	PUSH = 0xA0,
+	PUSHI = 0xA1,
 	POP = 0xB0,
 	CMP = 0xC0,
 	SYSCALL = 0xD0,
@@ -68,10 +79,13 @@ enum ProgramStatus
 	PS_HALT = 0x1,
 	PS_ADR = 0x2,
 	PS_INS = 0x3,
+	PS_STACK_OVERFLOW = 0x4,
+	PS_STACK_UNDERFLOW = 0x5,
 };
 
-enum SysCall
+enum SysCall_Type
 {
+	Sys_TestFunc = 0x00,
 	// 参数1：字符串地址
 	// 功能： 向标准输出流打印字符
 	Sys_PrintA = 0x10,
@@ -90,6 +104,9 @@ enum SysCall
 	// 参数1：目标寄存器
 	// 功能： 从标准输入读取一个字符，存到寄存器里面
 	Sys_GetR = 0x21,
+	// 无参数
+	// 功能： 获取当前系统时间
+	Sys_Time = 0x31,
 };
 
 

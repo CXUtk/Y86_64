@@ -1,6 +1,7 @@
 #ifndef Y86_64_ENVIRONMENT_H
 #define Y86_64_ENVIRONMENT_H
 #include <stdbool.h>
+#include <unordered_map>
 
 #include "ISA.h"
 #include "V_CPU.h"
@@ -11,17 +12,24 @@ class Environment
 public:
 	Environment();
 	~Environment();
-
-	int64_t		GetData(ADDRESS address);
-	void		SetData(ADDRESS address, int64_t value);
-	void		StopExec();
+	
+	// 启动CPU
 	void		Start();
-	void		Load(char * buffer, size_t num);
+
+	// 用于将代码加载的虚拟内存中
+	void		Load(unsigned char * buffer, size_t num);
+
+	void		SetMem(ADDRESS address, unsigned char * buffer, size_t num);
+	void		DisplayMem(ADDRESS address, size_t num);
 private:
 	ExecutionState *	_state;
 	V_CPU *				_vCPU;
 
+	std::unordered_map<ProgramStatus, fpState>			_globalStateTable;
+
 	void init();
+	void CheckState();
+
 };
 #endif
 
