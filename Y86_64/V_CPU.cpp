@@ -115,9 +115,22 @@ ADDRESS v_cpu::MovQuadR2R(ADDRESS addr, void * args)
 
 ADDRESS v_cpu::MovQuadI2R(ADDRESS addr, void *)
 {
-	const auto reg = static_cast<ISA_Register>(Memory[addr + 1]);
-	memcpy(&_commonRegs[reg], &Memory[addr + 2], MAX_ADDRESS_BYTES);
-	return addr + 2 + MAX_ADDRESS_BYTES;
+	return _internalI2R(addr, QUAD_BYTES);
+}
+
+ADDRESS v_cpu::MovDoubI2R(ADDRESS addr, void *)
+{
+	return _internalI2R(addr, DWORD_BYTES);
+}
+
+ADDRESS v_cpu::MovWordI2R(ADDRESS addr, void *)
+{
+	return _internalI2R(addr, WORD_BYTES);
+}
+
+ADDRESS v_cpu::MovByteI2R(ADDRESS addr, void *)
+{
+	return _internalI2R(addr, SINGLE_BYTE);
 }
 
 ADDRESS v_cpu::MovQuadR2M(ADDRESS addr, void *)
@@ -163,8 +176,8 @@ ADDRESS v_cpu::MovByteM2R(ADDRESS addr, void *)
 ADDRESS v_cpu::Op_add(ADDRESS addr, void *)
 {
 	const unsigned char regByte = Memory[addr + 1];
-	auto reg_b = static_cast<ISA_Register>(regByte & 0xF);
-	auto reg_a = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
 	const Reg_Value prevB = _commonRegs[reg_b];
 	const Reg_Value prevA = _commonRegs[reg_a];
 	_commonRegs[reg_b] = prevB + prevA;
@@ -176,8 +189,8 @@ ADDRESS v_cpu::Op_add(ADDRESS addr, void *)
 ADDRESS v_cpu::Op_sub(ADDRESS addr, void *)
 {
 	const unsigned char regByte = Memory[addr + 1];
-	auto reg_b = static_cast<ISA_Register>(regByte & 0xF);
-	auto reg_a = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
 	const Reg_Value prevB = _commonRegs[reg_b];
 	const Reg_Value prevA = _commonRegs[reg_a];
 	_commonRegs[reg_b] = prevB - prevA;
@@ -210,7 +223,10 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(STOP, &v_cpu::Stop));
 	_execFuncTable.insert(std::make_pair(NOP, &v_cpu::Nop));
 	_execFuncTable.insert(std::make_pair(RRMOV, &v_cpu::MovQuadR2R));
-	_execFuncTable.insert(std::make_pair(IRMOV, &v_cpu::MovQuadI2R));
+	_execFuncTable.insert(std::make_pair(IRMOVQ, &v_cpu::MovQuadI2R));
+	_execFuncTable.insert(std::make_pair(IRMOVD, &v_cpu::MovDoubI2R));
+	_execFuncTable.insert(std::make_pair(IRMOVW, &v_cpu::MovWordI2R));
+	_execFuncTable.insert(std::make_pair(IRMOVB, &v_cpu::MovByteI2R));
 	_execFuncTable.insert(std::make_pair(RMMOVQ, &v_cpu::MovQuadR2M));
 	_execFuncTable.insert(std::make_pair(RMMOVD, &v_cpu::MovDoubR2M));
 	_execFuncTable.insert(std::make_pair(RMMOVW, &v_cpu::MovWordR2M));
@@ -219,6 +235,9 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(MRMOVD, &v_cpu::MovDoubM2R));
 	_execFuncTable.insert(std::make_pair(MRMOVW, &v_cpu::MovWordM2R));
 	_execFuncTable.insert(std::make_pair(MRMOVB, &v_cpu::MovByteM2R));
+	_execFuncTable.insert(std::make_pair(OP_ADD, &v_cpu::Op_add));
+	_execFuncTable.insert(std::make_pair(OP_SUB, &v_cpu::Op_sub));
+
 }
 
 void v_cpu::set_condition_bit(ConditionBit bit, bool value)
@@ -246,8 +265,8 @@ ADDRESS v_cpu::_internalR2M(ADDRESS addr, size_t size)
 	// 将寄存器RA中的值放进寄存器RB的值所代表地址+val的内存中
 	// rmmovX ra, D(rb)
 	const unsigned char regByte = Memory[addr + 1];
-	auto reg_b = static_cast<ISA_Register>(regByte & 0xF);
-	auto reg_a = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
 	ADDRESS val;
 	memcpy(&val, &Memory[addr + 2], MAX_ADDRESS_BYTES);
 	const ADDRESS target = val + _commonRegs[reg_b];
@@ -264,8 +283,8 @@ ADDRESS v_cpu::_internalM2R(ADDRESS addr, size_t size)
 	// 将寄存器RB的值所代表地址+val的内存中的数据 放进寄存器RA中
 	// mrmovX D(rb), ra
 	const unsigned char regByte = Memory[addr + 1];
-	auto reg_b = static_cast<ISA_Register>(regByte & 0xF);
-	auto reg_a = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
 	ADDRESS val;
 	memcpy(&val, &Memory[addr + 2], MAX_ADDRESS_BYTES);
 	const ADDRESS target = val + _commonRegs[reg_b];
@@ -279,6 +298,13 @@ ADDRESS v_cpu::_internalM2R(ADDRESS addr, size_t size)
 	memcpy(&tmp, &Memory[target], size);
 	_commonRegs[reg_a] = tmp;
 	return addr + 2 + MAX_ADDRESS_BYTES;
+}
+
+ADDRESS v_cpu::_internalI2R(ADDRESS addr, size_t size)
+{
+	const auto reg = static_cast<ISA_Register>(Memory[addr + 1]);
+	memcpy(&_commonRegs[reg], &Memory[addr + 2], size);
+	return addr + 2 + size;
 }
 
 

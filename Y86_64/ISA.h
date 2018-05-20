@@ -38,7 +38,10 @@ enum ISA_OPCode
 	// 1 + 1£¨¼Ä´æÆ÷£©
 	RRMOV = 0x20,
 	// 1 + 1£¨¼Ä´æÆ÷£©+ 8£¨Á¢¼´Êý£©
-	IRMOV = 0x30,
+	IRMOVQ = 0x30,
+	IRMOVD = 0x31,
+	IRMOVW = 0x32,
+	IRMOVB = 0x33,
 	// 1 + 1£¨¼Ä´æÆ÷£©+ 8£¨ÄÚ´æµØÖ·£©
 	RMMOVQ = 0x40,
 	RMMOVD = 0x41,

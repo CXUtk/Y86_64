@@ -20,7 +20,7 @@ public:
 	ADDRESS Execute();
 	bool get_condition_bit(ConditionBit bit);
 private:
-	Reg_Value			_commonRegs[NUM_OF_REGISTER];
+	Reg_Value			_commonRegs[NUM_OF_REGISTER + 1];
 	ExecutionState *	_state;
 
 	std::unordered_map<ISA_OPCode, Exex_func>		_execFuncTable;
@@ -33,6 +33,9 @@ private:
 	ADDRESS Nop(ADDRESS, void *);
 	ADDRESS MovQuadR2R(ADDRESS, void *);
 	ADDRESS MovQuadI2R(ADDRESS, void *);
+	ADDRESS MovDoubI2R(ADDRESS, void *);
+	ADDRESS MovWordI2R(ADDRESS, void *);
+	ADDRESS MovByteI2R(ADDRESS, void *);
 	ADDRESS MovQuadR2M(ADDRESS, void *);
 	ADDRESS MovDoubR2M(ADDRESS, void *);
 	ADDRESS MovWordR2M(ADDRESS, void *);
@@ -50,6 +53,7 @@ private:
 	void set_flags(Reg_Value reg);
 	ADDRESS _internalR2M(ADDRESS addr, size_t size);
 	ADDRESS _internalM2R(ADDRESS addr, size_t size);
+	ADDRESS _internalI2R(ADDRESS addr, size_t size);
 
 };
 #endif
