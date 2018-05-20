@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Environment.h"
-#include <string.h>
 
 unsigned char Memory[MAX_MEMORY_ADDRESS];
 
@@ -12,7 +11,7 @@ void stop_exec(void * args)
 
 void invalid_addr(void * args)
 {
-	ExecutionState * state = (ExecutionState *)args;
+	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 地址无效！");
 	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
 	stop_exec(args);
@@ -20,7 +19,7 @@ void invalid_addr(void * args)
 
 void invalid_ins(void * args)
 {
-	ExecutionState * state = (ExecutionState *)args;
+	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 无法识别指令！");
 	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
 	stop_exec(args);
@@ -28,13 +27,17 @@ void invalid_ins(void * args)
 
 void stack_overflow(void * args)
 {
+	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 栈空间溢出（Stack Overflow）！");
+	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
 	stop_exec(args);
 }
 
 void stack_underflow(void * args)
 {
+	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 栈空间向下溢出（Stack Underflow）！");
+	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
 	stop_exec(args);
 }
 
@@ -96,7 +99,7 @@ void Environment::init()
 	_state->_programState = PS_OK;
 	_state->_programCounter = START_ADDRESS;
 
-	_vCPU = new V_CPU(_state);
+	_vCPU = new v_cpu(_state);
 
 
 	_globalStateTable.insert(std::make_pair(PS_HALT, stop_exec));

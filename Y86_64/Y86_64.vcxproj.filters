@@ -23,13 +23,13 @@
     <ClInclude Include="Environment.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="V_CPU.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ExecutionState.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Debug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="v_cpu.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -43,7 +43,7 @@
     <ClCompile Include="Environment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="V_CPU.cpp">
+    <ClCompile Include="v_cpu.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

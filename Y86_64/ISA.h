@@ -1,6 +1,6 @@
 #ifndef Y86_64_ISA_H
 #define Y86_64_ISA_H
-#include <inttypes.h>
+#include <cinttypes>
 
 typedef uint64_t ADDRESS;
 
@@ -13,7 +13,7 @@ const int NUM_OF_REGISTER = 8;
 const int QUAD_BYTES = 8;
 const int DWORD_BYTES = 4;
 const int WORD_BYTES = 2;
-const int SINGLE_BYTES = 1;
+const int SINGLE_BYTE = 1;
 
 const ADDRESS INVALID_ADDR = 0x00000;
 
@@ -26,7 +26,7 @@ const ADDRESS INIT_STACK_POS = 0x80000;
 const ADDRESS MAX_STACK_GROW = 0x04000;
 
 // Y86_64 寄存器
-typedef int64_t Register;
+typedef int64_t Reg_Value;
 
 typedef void (*fpState)(void *);
 
@@ -98,6 +98,7 @@ enum ProgramState
 	PS_INS = 0x3,
 	PS_STACK_OVERFLOW = 0x4,
 	PS_STACK_UNDERFLOW = 0x5,
+	PS_DIV_BY_ZERO = 0x6,
 };
 
 enum SysCall_Type
@@ -124,6 +125,15 @@ enum SysCall_Type
 	// 无参数
 	// 功能： 获取当前系统时间
 	Sys_Time = 0x31,
+};
+
+enum ConditionBit
+{
+	CC_ZERO,
+	CC_OVERFLOW,
+	CC_SIGN,
+	// Not used
+	CC_CARRY,
 };
 
 

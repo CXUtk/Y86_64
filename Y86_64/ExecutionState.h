@@ -4,7 +4,7 @@
 
 typedef struct {
 	ADDRESS			_programCounter;
-	Register		_conditionCode;
+	uint64_t		_conditionCode;
 	ProgramState	_programState;
 } ExecutionState;
 
