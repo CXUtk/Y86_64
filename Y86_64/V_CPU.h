@@ -19,6 +19,7 @@ public:
 
 	ADDRESS Execute();
 	bool get_condition_bit(ConditionBit bit);
+	void dump_regs();
 private:
 	Reg_Value			_commonRegs[NUM_OF_REGISTER + 1];
 	ExecutionState *	_state;
@@ -31,29 +32,54 @@ private:
 	ADDRESS Push(ADDRESS, void *);
 	ADDRESS Pop(ADDRESS, void *);
 	ADDRESS Nop(ADDRESS, void *);
+
 	ADDRESS MovQuadR2R(ADDRESS, void *);
+
 	ADDRESS MovQuadI2R(ADDRESS, void *);
 	ADDRESS MovDoubI2R(ADDRESS, void *);
 	ADDRESS MovWordI2R(ADDRESS, void *);
 	ADDRESS MovByteI2R(ADDRESS, void *);
+
 	ADDRESS MovQuadR2M(ADDRESS, void *);
 	ADDRESS MovDoubR2M(ADDRESS, void *);
 	ADDRESS MovWordR2M(ADDRESS, void *);
 	ADDRESS MovByteR2M(ADDRESS, void *);
+
 	ADDRESS MovQuadM2R(ADDRESS, void *);
 	ADDRESS MovDoubM2R(ADDRESS, void *);
 	ADDRESS MovWordM2R(ADDRESS, void *);
 	ADDRESS MovByteM2R(ADDRESS, void *);
+
 	ADDRESS Op_add(ADDRESS, void *);
 	ADDRESS Op_sub(ADDRESS, void *);
-	uint64_t internal_pop();
+	ADDRESS Op_mul(ADDRESS, void *);
+	ADDRESS Op_div(ADDRESS, void *);
+	ADDRESS Op_and(ADDRESS, void *);
+	ADDRESS Op_or(ADDRESS, void *);
+	ADDRESS Op_not(ADDRESS, void *);
+	ADDRESS Op_xor(ADDRESS, void *);
+	ADDRESS Op_shr(ADDRESS, void *);
+	ADDRESS Op_shl(ADDRESS, void *);
+	ADDRESS Op_inc(ADDRESS, void *);
+	ADDRESS Op_dec(ADDRESS, void *);
+	ADDRESS Op_neg(ADDRESS, void *);
 
+	ADDRESS Jmp(ADDRESS, void *);
+	ADDRESS Jle(ADDRESS, void *);
+	ADDRESS Jl(ADDRESS, void *);
+	ADDRESS Je(ADDRESS, void *);
+	ADDRESS Jne(ADDRESS, void *);
+	ADDRESS Jge(ADDRESS, void *);
+	ADDRESS Jg(ADDRESS, void *);
+
+	uint64_t internal_pop();
 	void init();
 	void set_condition_bit(ConditionBit bit, bool value);
 	void set_flags(Reg_Value reg);
 	ADDRESS _internalR2M(ADDRESS addr, size_t size);
 	ADDRESS _internalM2R(ADDRESS addr, size_t size);
 	ADDRESS _internalI2R(ADDRESS addr, size_t size);
+	ADDRESS _internalJMP(ADDRESS addr);
 
 };
 #endif

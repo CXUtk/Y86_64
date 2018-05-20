@@ -61,6 +61,7 @@ void Environment::Start()
 		CheckState();
 	}
 	DisplayMem(START_ADDRESS, 128);
+	_vCPU->dump_regs();
 	if (_globalStateTable.find(_state->_programState) != _globalStateTable.end()) {
 		if (_globalStateTable[_state->_programState]) {
 			_globalStateTable[_state->_programState](_state);

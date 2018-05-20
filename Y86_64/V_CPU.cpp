@@ -38,6 +38,36 @@ bool v_cpu::get_condition_bit(ConditionBit bit)
 	return (_state->_conditionCode >> bit) & 1;
 }
 
+void v_cpu::dump_regs()
+{
+	for(int reg = RAX; reg < NOREG; reg++)
+	{
+		char name[4];
+		if (reg == RAX)
+			strcpy_s(name, "RAX");
+		else if (reg == RBX)
+			strcpy_s(name, "RBX");
+		else if (reg == RCX)
+			strcpy_s(name, "RCX");
+		else if (reg == RDX)
+			strcpy_s(name, "RDX");
+		else if (reg == RBP)
+			strcpy_s(name, "RBX");
+		else if (reg == RSP)
+			strcpy_s(name, "RSP");
+		else if (reg == RBP)
+			strcpy_s(name, "RBP");
+		else if (reg == RSI)
+			strcpy_s(name, "RSI");
+		else if (reg == RDI)
+			strcpy_s(name, "RDI");
+
+		fprintf(stdout, "%s: 0x%.8X\n", name, _commonRegs[reg]);
+	}
+	fprintf(stdout, "%s: 0x%.8X\n", "RIP", _state->_programCounter);
+	fprintf(stdout, "%s: 0x%.8X\n", " PS", _state->_programState);
+}
+
 ADDRESS v_cpu::Stop(ADDRESS, void * args)
 {
 	_state->_programState = PS_HALT;
@@ -199,6 +229,207 @@ ADDRESS v_cpu::Op_sub(ADDRESS addr, void *)
 	return addr + 2;
 }
 
+ADDRESS v_cpu::Op_mul(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	_commonRegs[reg_b] = prevB * prevA;
+	set_flags(_commonRegs[reg_b]);
+
+	// 乘法除法不设置溢出符号
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_div(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	if(prevA == 0)
+	{
+		_state->_programState = PS_DIV_BY_ZERO;
+		return addr;
+	}
+	_commonRegs[reg_b] = prevB / prevA;
+	set_flags(_commonRegs[reg_b]);
+
+	// 乘法除法不设置溢出符号
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_and(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	_commonRegs[reg_b] = prevB & prevA;
+	set_flags(_commonRegs[reg_b]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_or(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	_commonRegs[reg_b] = prevB | prevA;
+	set_flags(_commonRegs[reg_b]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_not(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte);
+	_commonRegs[reg_a] = ~_commonRegs[reg_a];
+	set_flags(_commonRegs[reg_a]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_xor(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	_commonRegs[reg_b] = prevB ^ prevA;
+	set_flags(_commonRegs[reg_b]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_shr(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	_commonRegs[reg_b] = prevB >> prevA;
+	set_flags(_commonRegs[reg_b]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_shl(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	_commonRegs[reg_b] = prevB << prevA;
+	set_flags(_commonRegs[reg_b]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_inc(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte);
+	_commonRegs[reg_a] = _commonRegs[reg_a]++;
+	set_flags(_commonRegs[reg_a]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_dec(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte);
+	_commonRegs[reg_a] = _commonRegs[reg_a]--;
+	set_flags(_commonRegs[reg_a]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_neg(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte);
+	_commonRegs[reg_a] = -_commonRegs[reg_a];
+	set_flags(_commonRegs[reg_a]);
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Jmp(ADDRESS addr, void *)
+{
+	return _internalJMP(addr);
+
+}
+
+ADDRESS v_cpu::Jle(ADDRESS addr, void *)
+{
+	const bool SF = get_condition_bit(CC_SIGN);
+	const bool OF = get_condition_bit(CC_OVERFLOW);
+	const bool ZF = get_condition_bit(CC_ZERO);
+	if((SF ^ OF) | ZF)
+	{
+		return _internalJMP(addr);
+	}
+	return addr + 1 + MAX_ADDRESS_BYTES;
+}
+
+ADDRESS v_cpu::Jl(ADDRESS addr, void *)
+{
+	const bool SF = get_condition_bit(CC_SIGN);
+	const bool OF = get_condition_bit(CC_OVERFLOW);
+	if (SF ^ OF)
+	{
+		return _internalJMP(addr);
+	}
+	return addr + 1 + MAX_ADDRESS_BYTES;
+}
+
+ADDRESS v_cpu::Je(ADDRESS addr, void *)
+{
+	const bool ZF = get_condition_bit(CC_ZERO);
+	if (ZF)
+	{
+		return _internalJMP(addr);
+	}
+	return addr + 1 + MAX_ADDRESS_BYTES;
+}
+
+ADDRESS v_cpu::Jne(ADDRESS addr, void *)
+{
+	const bool ZF = get_condition_bit(CC_ZERO);
+	if (!ZF)
+	{
+		return _internalJMP(addr);
+	}
+	return addr + 1 + MAX_ADDRESS_BYTES;
+}
+
+ADDRESS v_cpu::Jge(ADDRESS addr, void *)
+{
+	const bool SF = get_condition_bit(CC_SIGN);
+	const bool OF = get_condition_bit(CC_OVERFLOW);
+	if (!(SF ^ OF))
+	{
+		return _internalJMP(addr);
+	}
+	return addr + 1 + MAX_ADDRESS_BYTES;
+}
+
+ADDRESS v_cpu::Jg(ADDRESS addr, void *)
+{
+	const bool SF = get_condition_bit(CC_SIGN);
+	const bool OF = get_condition_bit(CC_OVERFLOW);
+	const bool ZF = get_condition_bit(CC_ZERO);
+	if (!(SF ^ OF) & !ZF)
+	{
+		return _internalJMP(addr);
+	}
+	return addr + 1 + MAX_ADDRESS_BYTES;
+}
+
 uint64_t v_cpu::internal_pop()
 {
 	const ADDRESS sstop = _commonRegs[RSP];
@@ -237,7 +468,24 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(MRMOVB, &v_cpu::MovByteM2R));
 	_execFuncTable.insert(std::make_pair(OP_ADD, &v_cpu::Op_add));
 	_execFuncTable.insert(std::make_pair(OP_SUB, &v_cpu::Op_sub));
-
+	_execFuncTable.insert(std::make_pair(OP_MUL, &v_cpu::Op_mul));
+	_execFuncTable.insert(std::make_pair(OP_DIV, &v_cpu::Op_div));
+	_execFuncTable.insert(std::make_pair(OP_AND, &v_cpu::Op_and));
+	_execFuncTable.insert(std::make_pair(OP_OR, &v_cpu::Op_or));
+	_execFuncTable.insert(std::make_pair(OP_NOT, &v_cpu::Op_not));
+	_execFuncTable.insert(std::make_pair(OP_XOR, &v_cpu::Op_xor)); 
+	_execFuncTable.insert(std::make_pair(OP_SHL, &v_cpu::Op_shl));
+	_execFuncTable.insert(std::make_pair(OP_SHR, &v_cpu::Op_shr));
+	_execFuncTable.insert(std::make_pair(OP_INC, &v_cpu::Op_inc));
+	_execFuncTable.insert(std::make_pair(OP_DEC, &v_cpu::Op_inc));
+	_execFuncTable.insert(std::make_pair(OP_NEG, &v_cpu::Op_neg));
+	_execFuncTable.insert(std::make_pair(JMP, &v_cpu::Jmp));
+	_execFuncTable.insert(std::make_pair(JL, &v_cpu::Jl));
+	_execFuncTable.insert(std::make_pair(JLE, &v_cpu::Jle));
+	_execFuncTable.insert(std::make_pair(JE, &v_cpu::Je));
+	_execFuncTable.insert(std::make_pair(JNE, &v_cpu::Jne));
+	_execFuncTable.insert(std::make_pair(JG, &v_cpu::Jg));
+	_execFuncTable.insert(std::make_pair(JGE, &v_cpu::Jge));
 }
 
 void v_cpu::set_condition_bit(ConditionBit bit, bool value)
@@ -305,6 +553,17 @@ ADDRESS v_cpu::_internalI2R(ADDRESS addr, size_t size)
 	const auto reg = static_cast<ISA_Register>(Memory[addr + 1]);
 	memcpy(&_commonRegs[reg], &Memory[addr + 2], size);
 	return addr + 2 + size;
+}
+
+ADDRESS v_cpu::_internalJMP(ADDRESS addr)
+{
+	int64_t offset;
+	memcpy(&offset, &Memory[addr + 1], MAX_ADDRESS_BYTES);
+	if (offset >= MAX_MEMORY_ADDRESS || offset == 0) {
+		_state->_programState = PS_ADR;
+		return addr;
+	}
+	return addr + offset;
 }
 
 

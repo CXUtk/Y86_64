@@ -3,6 +3,7 @@
 
 Debug::Debug()
 {
+	_buffer.size = 0;
 	_buffer.content = nullptr;
 }
 
@@ -85,8 +86,14 @@ void Debug::AppendCode(ISA_OPCode code, Operand * operand)
 	{
 		ret = register_resource(2);
 		memcpy(ret.content, &code, 1);
-		memcpy(ret.content + 1, &operand->regA, 2);
-	}	
+		memcpy(ret.content + 1, &operand->regA, 1);
+	}
+	else if ((code & 0xF0) == JMP)
+	{
+		ret = register_resource(9);
+		memcpy(ret.content, &code, 1);
+		memcpy(ret.content + 1, &operand->value, 8);
+	}
 	_codeBufferList.push_back(ret);
 }
 
@@ -99,7 +106,7 @@ Code_Buffer Debug::GenerateCode()
 		totalSize += buf.size;
 	}
 	_buffer.size = totalSize;
-	if (_buffer.content) delete[] _buffer.content;
+	delete[] _buffer.content;
 	_buffer.content = new unsigned char[totalSize];
 	for (auto buf : _codeBufferList)
 	{

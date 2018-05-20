@@ -51,6 +51,8 @@ enum ISA_OPCode
 	MRMOVD = 0x51,
 	MRMOVW = 0x52,
 	MRMOVB = 0x53,
+	// OP 类指令
+	// 1 + 1（寄存器）
 	OP_ADD = 0x60,
 	OP_SUB = 0x61,
 	OP_MUL = 0x62,
@@ -63,6 +65,9 @@ enum ISA_OPCode
 	OP_SHL = 0x69,
 	OP_INC = 0x6A,
 	OP_DEC = 0x6B,
+	OP_NEG = 0x6C,
+	// JMP类指令
+	// 1 + 8（目的地址）
 	JMP = 0x70,
 	JLE = 0x71,
 	JL = 0x72,
@@ -70,13 +75,18 @@ enum ISA_OPCode
 	JNE = 0x74,
 	JGE = 0x75,
 	JG = 0x76,
+	// 1 + 8（目的地址）
 	CALL = 0x80,
+	// 1
 	RET = 0x90,
+	// 1 + 1（寄存器）
 	PUSH = 0xA0,
+	// 1 + 8（立即数）
 	PUSHI = 0xA1,
+	// 1 + 1（寄存器）
 	POP = 0xB0,
-	CMP = 0xC0,
-	SYSCALL = 0xD0,
+	// 1 + 1（功能）
+	SYSCALL = 0xC0,
 };
 
 // Y86_64 寄存器代码
