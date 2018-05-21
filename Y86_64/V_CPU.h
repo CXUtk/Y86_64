@@ -63,6 +63,8 @@ private:
 	ADDRESS Op_inc(ADDRESS, void *);
 	ADDRESS Op_dec(ADDRESS, void *);
 	ADDRESS Op_neg(ADDRESS, void *);
+	ADDRESS Op_cmp(ADDRESS, void *);
+	ADDRESS Op_test(ADDRESS, void *);
 
 	ADDRESS Jmp(ADDRESS, void *);
 	ADDRESS Jle(ADDRESS, void *);
@@ -72,7 +74,10 @@ private:
 	ADDRESS Jge(ADDRESS, void *);
 	ADDRESS Jg(ADDRESS, void *);
 
-	uint64_t internal_pop();
+	ADDRESS Call(ADDRESS, void *);
+	ADDRESS Ret(ADDRESS, void *);
+
+
 	void init();
 	void set_condition_bit(ConditionBit bit, bool value);
 	void set_flags(Reg_Value reg);
@@ -80,6 +85,8 @@ private:
 	ADDRESS _internalM2R(ADDRESS addr, size_t size);
 	ADDRESS _internalI2R(ADDRESS addr, size_t size);
 	ADDRESS _internalJMP(ADDRESS addr);
+	uint64_t internal_pop();
+	void internal_push(uint64_t value);
 
 };
 #endif

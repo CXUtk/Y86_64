@@ -23,7 +23,11 @@ const ADDRESS START_ADDRESS = 0x10000;
 
 // 栈的位置
 const ADDRESS INIT_STACK_POS = 0x80000;
-const ADDRESS MAX_STACK_GROW = 0x04000;
+const ADDRESS MAX_STACK_SIZE = 0x04000;
+
+// 堆的位置
+const ADDRESS INIT_HEAP_POS = 0xA0000;
+const ADDRESS MAX_HEAP_SIZE = 0x20000;
 
 // Y86_64 寄存器
 typedef int64_t Reg_Value;
@@ -66,6 +70,8 @@ enum ISA_OPCode
 	OP_INC = 0x6A,
 	OP_DEC = 0x6B,
 	OP_NEG = 0x6C,
+	OP_CMP = 0x6D,
+	OP_TEST = 0x6E,
 	// JMP类指令
 	// 1 + 8（目的地址）
 	JMP = 0x70,
@@ -121,13 +127,13 @@ enum SysCall_Type
 	// 功能： 向标准输出流打印字符
 	Sys_PrintA = 0x10,
 	// 参数1：整数的地址
-	// 功能： 向标准输出流打印整数字符
-	Sys_PrintD = 0x11,
+	// 功能： 向标准输出流打印8字节整数字符
+	Sys_PrintDQ = 0x11,
 	// 参数1：目标寄存器
 	// 功能： 向标准输出流打印字符
 	Sys_PrintAR = 0x12,
 	// 参数1：目标寄存器
-	// 功能： 向标准输出流打印整数字符
+	// 功能： 向标准输出流打印8字节整数字符
 	Sys_PrintDR = 0x13,
 	// 参数1：目标存储地址（char）
 	// 功能： 从标准输入读取一个字符，存到地址里面
@@ -137,7 +143,10 @@ enum SysCall_Type
 	Sys_GetR = 0x21,
 	// 无参数
 	// 功能： 获取当前系统时间
-	Sys_Time = 0x31,
+	Sys_Time = 0x30,
+	// 参数1：分配内存字节大小
+	// 功能： 在堆中分配指定大小的内存，返回指向内存区域的指针
+	Sys_Malloc = 0x40,
 };
 
 enum ConditionBit

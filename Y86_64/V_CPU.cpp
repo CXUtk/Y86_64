@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <ctime>
 #include "V_CPU.h"
 
 
@@ -40,7 +41,7 @@ bool v_cpu::get_condition_bit(ConditionBit bit)
 
 void v_cpu::dump_regs()
 {
-	for(int reg = RAX; reg < NOREG; reg++)
+	for (int reg = RAX; reg < NOREG; reg++)
 	{
 		char name[4];
 		if (reg == RAX)
@@ -77,13 +78,44 @@ ADDRESS v_cpu::Stop(ADDRESS, void * args)
 ADDRESS v_cpu::SysCall(ADDRESS addr, void * args)
 {
 	const auto type = static_cast<SysCall_Type>(Memory[addr + 1]);
-	if (type == Sys_TestFunc) {
+	switch (type)
+	{
+	case Sys_TestFunc:
+	{
 		fprintf(stdout, "%s\n", "系统调用#0，测试环境 正常");
+		break;
 	}
-	if (type == Sys_PrintA) {
-		ADDRESS target = internal_pop();
-		// TODO：检测是否越界
-		fprintf(stdout, "%s\n", reinterpret_cast<char *>(&Memory[target]));
+	case Sys_PrintA:
+	{
+		const ADDRESS target = internal_pop();
+		// 检测是否越界
+		if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+			_state->_programState = PS_ADR;
+			return addr;
+		}
+		fprintf(stdout, "%s\n", &Memory[target]);
+	}
+	case Sys_PrintDQ:
+	{
+		const ADDRESS target = internal_pop();
+		// 检测是否越界
+		if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+			_state->_programState = PS_ADR;
+			return addr;
+		}
+		int64_t value;
+		memcpy(&value, &Memory[target], QUAD_BYTES);
+		fprintf(stdout, "%lld\n", value);
+	}
+	case Sys_Time:
+	{
+		_commonRegs[RAX] = time(nullptr);
+	}
+	default:
+	{
+		_state->_programState = PS_INS;
+		return addr;
+	}
 	}
 	return addr + 2;
 }
@@ -93,7 +125,7 @@ ADDRESS v_cpu::PushI(ADDRESS addr, void * args)
 	// 将立即数[addr + 1]推进栈中
 	_commonRegs[RSP] -= sizeof(uint64_t);
 	const ADDRESS sstop = _commonRegs[RSP];
-	if (sstop < INIT_STACK_POS - MAX_STACK_GROW) {
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE) {
 		_state->_programState = PS_STACK_OVERFLOW;
 		return addr;
 	}
@@ -107,7 +139,7 @@ ADDRESS v_cpu::Push(ADDRESS addr, void *)
 	const auto reg = static_cast<ISA_Register>(Memory[addr + 1]);
 	_commonRegs[RSP] -= MAX_ADDRESS_BYTES;
 	const ADDRESS sstop = _commonRegs[RSP];
-	if (sstop < INIT_STACK_POS - MAX_STACK_GROW) {
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE) {
 		_state->_programState = PS_STACK_OVERFLOW;
 		return addr;
 	}
@@ -250,7 +282,7 @@ ADDRESS v_cpu::Op_div(ADDRESS addr, void *)
 	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
 	const Reg_Value prevB = _commonRegs[reg_b];
 	const Reg_Value prevA = _commonRegs[reg_a];
-	if(prevA == 0)
+	if (prevA == 0)
 	{
 		_state->_programState = PS_DIV_BY_ZERO;
 		return addr;
@@ -358,6 +390,27 @@ ADDRESS v_cpu::Op_neg(ADDRESS addr, void *)
 	return addr + 2;
 }
 
+ADDRESS v_cpu::Op_cmp(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
+	auto reg_b = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	const Reg_Value prevB = _commonRegs[reg_b];
+	const Reg_Value prevA = _commonRegs[reg_a];
+	set_flags(prevB - prevA);
+	set_condition_bit(CC_OVERFLOW, (prevB < 0 != prevA < 0) && (_commonRegs[reg_b] < 0 != prevB < 0));
+	return addr + 2;
+}
+
+ADDRESS v_cpu::Op_test(ADDRESS addr, void *)
+{
+	const unsigned char regByte = Memory[addr + 1];
+	auto reg_a = static_cast<ISA_Register>(regByte);
+	const Reg_Value prevA = _commonRegs[reg_a];
+	set_flags(prevA);
+	return addr + 2;
+}
+
 ADDRESS v_cpu::Jmp(ADDRESS addr, void *)
 {
 	return _internalJMP(addr);
@@ -369,7 +422,7 @@ ADDRESS v_cpu::Jle(ADDRESS addr, void *)
 	const bool SF = get_condition_bit(CC_SIGN);
 	const bool OF = get_condition_bit(CC_OVERFLOW);
 	const bool ZF = get_condition_bit(CC_ZERO);
-	if((SF ^ OF) | ZF)
+	if ((SF ^ OF) | ZF)
 	{
 		return _internalJMP(addr);
 	}
@@ -430,9 +483,38 @@ ADDRESS v_cpu::Jg(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
+ADDRESS v_cpu::Call(ADDRESS addr, void *)
+{
+	ADDRESS target;
+	memcpy(&target, &Memory[addr + 1], MAX_ADDRESS_BYTES);
+	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+		_state->_programState = PS_ADR;
+		return addr;
+	}
+	internal_push(addr + 1 + 8);
+	// 预留8字节栈空间
+	internal_push(0);
+	return target;
+}
+
+ADDRESS v_cpu::Ret(ADDRESS addr, void *)
+{
+	// 弹出预留栈空间
+	internal_pop();
+
+	// 真实跳转地址
+	const ADDRESS target = internal_pop();
+	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+		_state->_programState = PS_ADR;
+		return addr;
+	}
+	return target;
+}
+
 uint64_t v_cpu::internal_pop()
 {
 	const ADDRESS sstop = _commonRegs[RSP];
+	// 栈溢出检测
 	if (sstop >= INIT_STACK_POS) {
 		_state->_programState = PS_STACK_UNDERFLOW;
 	}
@@ -441,6 +523,18 @@ uint64_t v_cpu::internal_pop()
 	memcpy(&result, &Memory[sstop], MAX_ADDRESS_BYTES);
 	_commonRegs[RSP] += MAX_ADDRESS_BYTES;
 	return result;
+}
+
+void v_cpu::internal_push(uint64_t value)
+{
+	_commonRegs[RSP] -= sizeof(uint64_t);
+	const ADDRESS sstop = _commonRegs[RSP];
+	// 栈溢出检测
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE) {
+		_state->_programState = PS_STACK_OVERFLOW;
+		return;
+	}
+	memcpy(&Memory[sstop], &value, MAX_ADDRESS_BYTES);
 }
 
 void v_cpu::init()
@@ -473,12 +567,14 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(OP_AND, &v_cpu::Op_and));
 	_execFuncTable.insert(std::make_pair(OP_OR, &v_cpu::Op_or));
 	_execFuncTable.insert(std::make_pair(OP_NOT, &v_cpu::Op_not));
-	_execFuncTable.insert(std::make_pair(OP_XOR, &v_cpu::Op_xor)); 
+	_execFuncTable.insert(std::make_pair(OP_XOR, &v_cpu::Op_xor));
 	_execFuncTable.insert(std::make_pair(OP_SHL, &v_cpu::Op_shl));
 	_execFuncTable.insert(std::make_pair(OP_SHR, &v_cpu::Op_shr));
 	_execFuncTable.insert(std::make_pair(OP_INC, &v_cpu::Op_inc));
 	_execFuncTable.insert(std::make_pair(OP_DEC, &v_cpu::Op_inc));
 	_execFuncTable.insert(std::make_pair(OP_NEG, &v_cpu::Op_neg));
+	_execFuncTable.insert(std::make_pair(OP_CMP, &v_cpu::Op_cmp));
+	_execFuncTable.insert(std::make_pair(OP_TEST, &v_cpu::Op_test));
 	_execFuncTable.insert(std::make_pair(JMP, &v_cpu::Jmp));
 	_execFuncTable.insert(std::make_pair(JL, &v_cpu::Jl));
 	_execFuncTable.insert(std::make_pair(JLE, &v_cpu::Jle));
@@ -486,6 +582,8 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(JNE, &v_cpu::Jne));
 	_execFuncTable.insert(std::make_pair(JG, &v_cpu::Jg));
 	_execFuncTable.insert(std::make_pair(JGE, &v_cpu::Jge));
+	_execFuncTable.insert(std::make_pair(CALL, &v_cpu::Call));
+	_execFuncTable.insert(std::make_pair(RET, &v_cpu::Ret));
 }
 
 void v_cpu::set_condition_bit(ConditionBit bit, bool value)
@@ -505,6 +603,7 @@ void v_cpu::set_flags(Reg_Value reg)
 {
 	set_condition_bit(CC_ZERO, reg == 0);
 	set_condition_bit(CC_SIGN, reg < 0);
+	set_condition_bit(CC_CARRY, false);
 }
 
 
@@ -559,7 +658,7 @@ ADDRESS v_cpu::_internalJMP(ADDRESS addr)
 {
 	int64_t offset;
 	memcpy(&offset, &Memory[addr + 1], MAX_ADDRESS_BYTES);
-	if (offset >= MAX_MEMORY_ADDRESS || offset == 0) {
+	if (_state->_programCounter + offset >= MAX_MEMORY_ADDRESS || _state->_programCounter + offset == 0) {
 		_state->_programState = PS_ADR;
 		return addr;
 	}
