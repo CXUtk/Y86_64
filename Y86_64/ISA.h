@@ -32,8 +32,6 @@ const ADDRESS MAX_HEAP_SIZE = 0x20000;
 // Y86_64 ¼Ä´æÆ÷
 typedef int64_t Reg_Value;
 
-typedef void (*fpState)(void *);
-
 // Y86_64 ×Ö½ÚÂë
 enum ISA_OPCode
 {

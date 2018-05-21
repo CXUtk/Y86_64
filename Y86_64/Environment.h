@@ -6,9 +6,17 @@
 #include "v_cpu.h"
 #include "ExecutionState.h"
 
+class Environment;
+typedef void(Environment::*fpState)(void *);
+
 class Environment
 {
 public:
+	void stop_exec(void * args);
+	void invalid_addr(void * args);
+	void invalid_ins(void * args);
+	void stack_overflow(void * args);
+	void stack_underflow(void * args);
 	Environment();
 	~Environment();
 

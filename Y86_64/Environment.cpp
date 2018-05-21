@@ -3,13 +3,13 @@
 
 unsigned char Memory[MAX_MEMORY_ADDRESS];
 
-void stop_exec(void * args)
+void Environment::stop_exec(void * args)
 {
 	fprintf(stdout, "%s\n", "CPU: 执行已经停止！");
 	getchar();
 }
 
-void invalid_addr(void * args)
+void Environment::invalid_addr(void * args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 地址无效！");
@@ -17,7 +17,7 @@ void invalid_addr(void * args)
 	stop_exec(args);
 }
 
-void invalid_ins(void * args)
+void Environment::invalid_ins(void * args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 无法识别指令！");
@@ -25,7 +25,7 @@ void invalid_ins(void * args)
 	stop_exec(args);
 }
 
-void stack_overflow(void * args)
+void Environment::stack_overflow(void * args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 栈空间溢出（Stack Overflow）！");
@@ -33,7 +33,7 @@ void stack_overflow(void * args)
 	stop_exec(args);
 }
 
-void stack_underflow(void * args)
+void Environment::stack_underflow(void * args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 栈空间向下溢出（Stack Underflow）！");
@@ -64,7 +64,7 @@ void Environment::Start()
 	_vCPU->dump_regs();
 	if (_globalStateTable.find(_state->_programState) != _globalStateTable.end()) {
 		if (_globalStateTable[_state->_programState]) {
-			_globalStateTable[_state->_programState](_state);
+			(this->*_globalStateTable[_state->_programState])(_state);
 		}
 	}
 }
@@ -103,11 +103,11 @@ void Environment::init()
 	_vCPU = new v_cpu(_state);
 
 
-	_globalStateTable.insert(std::make_pair(PS_HALT, stop_exec));
-	_globalStateTable.insert(std::make_pair(PS_ADR, invalid_addr));
-	_globalStateTable.insert(std::make_pair(PS_INS, invalid_ins));
-	_globalStateTable.insert(std::make_pair(PS_STACK_OVERFLOW, stack_overflow));
-	_globalStateTable.insert(std::make_pair(PS_STACK_UNDERFLOW, stack_underflow));
+	_globalStateTable.insert(std::make_pair(PS_HALT, &Environment::stop_exec));
+	_globalStateTable.insert(std::make_pair(PS_ADR, &Environment::invalid_addr));
+	_globalStateTable.insert(std::make_pair(PS_INS, &Environment::invalid_ins));
+	_globalStateTable.insert(std::make_pair(PS_STACK_OVERFLOW, &Environment::stack_overflow));
+	_globalStateTable.insert(std::make_pair(PS_STACK_UNDERFLOW, &Environment::stack_underflow));
 }
 
 

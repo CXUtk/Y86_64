@@ -9,7 +9,7 @@ Debug::Debug()
 
 Debug::~Debug()
 {
-	for(auto buf : _codeBufferList)
+	for (auto buf : _codeBufferList)
 	{
 		delete[] buf.content;
 	}
@@ -19,7 +19,7 @@ Debug::~Debug()
 void Debug::AppendCode(ISA_OPCode code, Operand * operand)
 {
 	Code_Buffer ret;
-	if(code == IRMOVQ)
+	if (code == IRMOVQ)
 	{
 		ret = register_resource(10);
 		memcpy(ret.content, &code, 1);
@@ -47,7 +47,7 @@ void Debug::AppendCode(ISA_OPCode code, Operand * operand)
 		memcpy(ret.content + 1, &operand->regA, 1);
 		memcpy(ret.content + 2, &operand->value, SINGLE_BYTE);
 	}
-	else if(code == RRMOV)
+	else if (code == RRMOV)
 	{
 		ret = register_resource(2);
 		unsigned char regByte = ((operand->regB & 0xF) << 4) | (operand->regA & 0xF);
@@ -55,7 +55,7 @@ void Debug::AppendCode(ISA_OPCode code, Operand * operand)
 		memcpy(ret.content + 1, &regByte, 1);
 	}
 	else if (code == RMMOVQ || code == RMMOVD || code == RMMOVW || code == RMMOVB
-		|| code ==MRMOVQ || code == MRMOVD || code == MRMOVW || code == MRMOVB)
+		|| code == MRMOVQ || code == MRMOVD || code == MRMOVW || code == MRMOVB)
 	{
 		ret = register_resource(10);
 		unsigned char regByte = ((operand->regB & 0xF) << 4) | (operand->regA & 0xF);
@@ -94,6 +94,17 @@ void Debug::AppendCode(ISA_OPCode code, Operand * operand)
 		memcpy(ret.content, &code, 1);
 		memcpy(ret.content + 1, &operand->value, 8);
 	}
+	else if (code == CALL)
+	{
+		ret = register_resource(9);
+		memcpy(ret.content, &code, 1);
+		memcpy(ret.content + 1, &operand->value, 8);
+	}
+	else
+	{
+		ret = register_resource(1);
+		memcpy(ret.content, &code, 1);
+	}
 	_codeBufferList.push_back(ret);
 }
 
@@ -101,7 +112,7 @@ Code_Buffer Debug::GenerateCode()
 {
 	size_t totalSize = 0;
 	size_t pos = 0;
-	for(auto buf : _codeBufferList)
+	for (auto buf : _codeBufferList)
 	{
 		totalSize += buf.size;
 	}

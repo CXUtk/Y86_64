@@ -94,6 +94,7 @@ ADDRESS v_cpu::SysCall(ADDRESS addr, void * args)
 			return addr;
 		}
 		fprintf(stdout, "%s\n", &Memory[target]);
+		break;
 	}
 	case Sys_PrintDQ:
 	{
@@ -106,10 +107,12 @@ ADDRESS v_cpu::SysCall(ADDRESS addr, void * args)
 		int64_t value;
 		memcpy(&value, &Memory[target], QUAD_BYTES);
 		fprintf(stdout, "%lld\n", value);
+		break;
 	}
 	case Sys_Time:
 	{
 		_commonRegs[RAX] = time(nullptr);
+		break;
 	}
 	default:
 	{
@@ -367,7 +370,7 @@ ADDRESS v_cpu::Op_inc(ADDRESS addr, void *)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
-	_commonRegs[reg_a] = _commonRegs[reg_a]++;
+	_commonRegs[reg_a]++;
 	set_flags(_commonRegs[reg_a]);
 	return addr + 2;
 }
@@ -376,7 +379,7 @@ ADDRESS v_cpu::Op_dec(ADDRESS addr, void *)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
-	_commonRegs[reg_a] = _commonRegs[reg_a]--;
+	_commonRegs[reg_a]--;
 	set_flags(_commonRegs[reg_a]);
 	return addr + 2;
 }
@@ -571,7 +574,7 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(OP_SHL, &v_cpu::Op_shl));
 	_execFuncTable.insert(std::make_pair(OP_SHR, &v_cpu::Op_shr));
 	_execFuncTable.insert(std::make_pair(OP_INC, &v_cpu::Op_inc));
-	_execFuncTable.insert(std::make_pair(OP_DEC, &v_cpu::Op_inc));
+	_execFuncTable.insert(std::make_pair(OP_DEC, &v_cpu::Op_dec));
 	_execFuncTable.insert(std::make_pair(OP_NEG, &v_cpu::Op_neg));
 	_execFuncTable.insert(std::make_pair(OP_CMP, &v_cpu::Op_cmp));
 	_execFuncTable.insert(std::make_pair(OP_TEST, &v_cpu::Op_test));
@@ -662,7 +665,7 @@ ADDRESS v_cpu::_internalJMP(ADDRESS addr)
 		_state->_programState = PS_ADR;
 		return addr;
 	}
-	return addr + offset;
+	return addr + 1 + 8 + offset;
 }
 
 
