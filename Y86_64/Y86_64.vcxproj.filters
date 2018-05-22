@@ -26,10 +26,10 @@
     <ClInclude Include="ExecutionState.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Debug.h">
+    <ClInclude Include="v_cpu.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="v_cpu.h">
+    <ClInclude Include="CodeGen.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -46,7 +46,7 @@
     <ClCompile Include="v_cpu.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Debug.cpp">
+    <ClCompile Include="CodeGen.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

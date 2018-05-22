@@ -84,10 +84,13 @@ void Environment::SetMem(ADDRESS address, unsigned char * buffer, size_t num)
 
 void Environment::DisplayMem(ADDRESS address, size_t num)
 {
+	fprintf(stdout, "起始地址内存空间：");
 	for (size_t i = 0; i < num; i++) {
+		if (i == 0 || i % 16 == 0)
+			fprintf(stdout, "\n0x%.8X: ", address + i);
 		fprintf(stdout, "%.2x ", Memory[address + i]);
 	}
-	fprintf(stdout, "\n");
+	fprintf(stdout, "\n\n");
 	fflush(stdout);
 }
 

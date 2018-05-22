@@ -63,10 +63,10 @@ void v_cpu::dump_regs()
 		else if (reg == RDI)
 			strcpy_s(name, "RDI");
 
-		fprintf(stdout, "%s: 0x%.8X\n", name, _commonRegs[reg]);
+		fprintf(stdout, "%s: 0x%.16X\n", name, _commonRegs[reg]);
 	}
-	fprintf(stdout, "%s: 0x%.8X\n", "RIP", _state->_programCounter);
-	fprintf(stdout, "%s: 0x%.8X\n", " PS", _state->_programState);
+	fprintf(stdout, "%s: 0x%.16X\n", "RIP", _state->_programCounter);
+	fprintf(stdout, "%s: 0x%.16X\n", " PS", _state->_programState);
 }
 
 ADDRESS v_cpu::Stop(ADDRESS, void * args)
@@ -661,11 +661,12 @@ ADDRESS v_cpu::_internalJMP(ADDRESS addr)
 {
 	int64_t offset;
 	memcpy(&offset, &Memory[addr + 1], MAX_ADDRESS_BYTES);
-	if (_state->_programCounter + offset >= MAX_MEMORY_ADDRESS || _state->_programCounter + offset == 0) {
+	// 跳转到指令结束位置+偏移位置
+	const ADDRESS target = _state->_programCounter + offset + 1 + 8;
+
+	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
 		_state->_programState = PS_ADR;
 		return addr;
 	}
-	return addr + 1 + 8 + offset;
+	return target;
 }
-
-

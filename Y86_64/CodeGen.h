@@ -15,11 +15,11 @@ typedef struct
 	unsigned char * content;
 } Code_Buffer;
 
-class Debug
+class CodeGen
 {
 public:
-	Debug();
-	~Debug();
+	CodeGen();
+	~CodeGen();
 	// 向Debug缓冲区中添加指令
 	void AppendCode(ISA_OPCode code, Operand * operand);
 
@@ -30,7 +30,7 @@ private:
 	std::vector<Code_Buffer> _codeBufferList;
 	Code_Buffer _buffer;
 
-	Code_Buffer register_resource(size_t size);
+	Code_Buffer alloc_resource(size_t size);
 };
 
 #endif // !Y86_64_DEBUG_H

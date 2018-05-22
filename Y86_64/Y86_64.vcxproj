@@ -148,7 +148,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Debug.h" />
+    <ClInclude Include="CodeGen.h" />
     <ClInclude Include="Environment.h" />
     <ClInclude Include="ExecutionState.h" />
     <ClInclude Include="ISA.h" />
@@ -157,7 +157,7 @@
     <ClInclude Include="v_cpu.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Debug.cpp" />
+    <ClCompile Include="CodeGen.cpp" />
     <ClCompile Include="Environment.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
