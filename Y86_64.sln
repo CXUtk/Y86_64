@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Y86_64_ASM", "Y86_64_ASM\Y8
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Y86_64_DASM", "Y86_64_DASM\Y86_64_DASM.vcxproj", "{032700E2-F692-4579-A58C-D7EB7858D43D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Y86_64_Linker", "Y86_64_Linker\Y86_64_Linker.vcxproj", "{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{032700E2-F692-4579-A58C-D7EB7858D43D}.Release|x64.Build.0 = Release|x64
 		{032700E2-F692-4579-A58C-D7EB7858D43D}.Release|x86.ActiveCfg = Release|Win32
 		{032700E2-F692-4579-A58C-D7EB7858D43D}.Release|x86.Build.0 = Release|Win32
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Debug|x64.ActiveCfg = Debug|x64
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Debug|x64.Build.0 = Debug|x64
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Debug|x86.ActiveCfg = Debug|Win32
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Debug|x86.Build.0 = Debug|Win32
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x64.ActiveCfg = Release|x64
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x64.Build.0 = Release|x64
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x86.ActiveCfg = Release|Win32
+		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -39,6 +39,7 @@ bool v_cpu::get_condition_bit(ConditionBit bit)
 	return (_state->_conditionCode >> bit) & 1;
 }
 
+
 void v_cpu::dump_regs()
 {
 	for (int reg = RAX; reg < NOREG; reg++)
@@ -107,6 +108,16 @@ ADDRESS v_cpu::SysCall(ADDRESS addr, void * args)
 		int64_t value;
 		memcpy(&value, &Memory[target], QUAD_BYTES);
 		fprintf(stdout, "%lld\n", value);
+		break;
+	}
+	case Sys_PrintAR: {
+		const ISA_Register target = (ISA_Register)internal_pop();
+		fprintf(stdout, "%s\n", &Memory[_commonRegs[target]]);
+		break;
+	}
+	case Sys_PrintDR: {
+		const ISA_Register target = (ISA_Register)internal_pop();
+		fprintf(stdout, "%lld\n", _commonRegs[target]);
 		break;
 	}
 	case Sys_Time:

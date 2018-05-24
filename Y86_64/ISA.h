@@ -29,6 +29,17 @@ const ADDRESS MAX_STACK_SIZE = 0x04000;
 const ADDRESS INIT_HEAP_POS = 0xA0000;
 const ADDRESS MAX_HEAP_SIZE = 0x20000;
 
+// »ã±à´úÂë½âÎö·ûºÅ³£Á¿
+const char POS_INDICATION_TOKEN[] = ".pos";
+const char QUAD_BYTE_DATA_TOKEN[] = ".quad";
+const char DWORD_BYTE_DATA_TOKEN[] = ".dword";
+const char WORD_BYTE_DATA_TOKEN[] = ".word";
+const char BYTE_DATA_TOKEN[] = ".byte";
+const char STRING_DATA_TOKEN[] = ".string";
+const char HEX_NUMBER_HEAD_TOKEN[] = "0x";
+const char IMMIDATE_NUMBER_TOKEN = '$';
+const char COMMENT_TOKEN = '#';
+
 // Y86_64 ¼Ä´æÆ÷
 typedef int64_t Reg_Value;
 
