@@ -14,6 +14,7 @@ const int QUAD_BYTES = 8;
 const int DWORD_BYTES = 4;
 const int WORD_BYTES = 2;
 const int SINGLE_BYTE = 1;
+const uint32_t MAGIC_NUMBER = 0x2c42f75b;
 
 const ADDRESS INVALID_ADDR = 0x00000;
 
@@ -166,6 +167,19 @@ enum ConditionBit
 	// Not used
 	CC_CARRY,
 };
+
+typedef struct {
+	// 文件类型确认符
+	uint32_t type_identifier;
+	// 代码段偏移量（相对文件头）
+	size_t code_seg_offset;
+	// 代码段大小
+	size_t code_size;
+	// 数据段偏移量
+	size_t data_seg_offset;
+	// 数据段大小
+	size_t data_size;
+} ObjectFileHeader;
 
 
 #endif
