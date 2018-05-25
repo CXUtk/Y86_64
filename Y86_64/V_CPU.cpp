@@ -53,8 +53,6 @@ void v_cpu::dump_regs()
 			strcpy_s(name, "RCX");
 		else if (reg == RDX)
 			strcpy_s(name, "RDX");
-		else if (reg == RBP)
-			strcpy_s(name, "RBX");
 		else if (reg == RSP)
 			strcpy_s(name, "RSP");
 		else if (reg == RBP)
@@ -183,8 +181,8 @@ ADDRESS v_cpu::Nop(ADDRESS addr, void * args)
 ADDRESS v_cpu::MovQuadR2R(ADDRESS addr, void * args)
 {
 	const unsigned char regByte = Memory[addr + 1];
-	auto regB = static_cast<ISA_Register>(regByte & 0xF);
-	auto regA = static_cast<ISA_Register>((regByte >> 4) & 0xF);
+	auto regA = static_cast<ISA_Register>(regByte & 0xF);
+	auto regB = static_cast<ISA_Register>((regByte >> 4) & 0xF);
 	_commonRegs[regB] = _commonRegs[regA];
 	return addr + 2;
 }

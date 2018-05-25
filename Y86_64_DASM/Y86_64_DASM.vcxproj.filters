@@ -18,9 +18,15 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\Y86_64\Utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Y86_64\ISA.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Y86_64\Utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

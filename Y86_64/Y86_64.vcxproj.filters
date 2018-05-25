@@ -32,6 +32,9 @@
     <ClInclude Include="CodeGen.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -47,6 +50,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CodeGen.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
