@@ -154,6 +154,12 @@ void get_ins_name(char name[8], ISA_OPCode code)
 	case POP:
 		strcpy_s(name, 8, "POP");
 		break;
+	case PUSHN:
+		strcpy_s(name, 8, "PUSHN");
+		break;
+	case POPN:
+		strcpy_s(name, 8, "POPN");
+		break;
 	case SYSCALL:
 		strcpy_s(name, 8, "SYSCALL");
 		break;
@@ -162,5 +168,3 @@ void get_ins_name(char name[8], ISA_OPCode code)
 		break;
 	}
 }
-
-

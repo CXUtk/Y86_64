@@ -20,6 +20,7 @@ public:
 	ADDRESS Execute();
 	bool get_condition_bit(ConditionBit bit);
 	void dump_regs();
+	void dump_stack();
 private:
 	Reg_Value			_commonRegs[NUM_OF_REGISTER + 1];
 	ExecutionState *	_state;
@@ -29,8 +30,10 @@ private:
 	ADDRESS Stop(ADDRESS, void *);
 	ADDRESS SysCall(ADDRESS, void *);
 	ADDRESS PushI(ADDRESS, void *);
+	ADDRESS PushN(ADDRESS, void *);
 	ADDRESS Push(ADDRESS, void *);
 	ADDRESS Pop(ADDRESS, void *);
+	ADDRESS PopN(ADDRESS, void *);
 	ADDRESS Nop(ADDRESS, void *);
 
 	ADDRESS MovQuadR2R(ADDRESS, void *);

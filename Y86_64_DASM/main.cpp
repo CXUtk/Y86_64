@@ -274,12 +274,19 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		sprintf(str, "<At 0x%X>", pos);
 		break;
 	}
+	case POPN:
+	case PUSHN:
+	{
+		int32_t value;
+		memcpy(&value, &code_seg[addr + 1], DWORD_BYTES);
+		sprintf(str, "$%d", value);
+		break;
+	}
 	case PUSHI:
 	{
 		int64_t value;
 		memcpy(&value, &code_seg[addr + 1], MAX_ADDRESS_BYTES);
 		sprintf(str, "$%lld", value);
-		break;
 		break;
 	}
 	case SYSCALL:

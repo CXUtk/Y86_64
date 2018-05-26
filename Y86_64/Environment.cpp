@@ -3,41 +3,41 @@
 
 unsigned char Memory[MAX_MEMORY_ADDRESS];
 
-void Environment::stop_exec(void * args)
+void Environment::stop_exec(void* args)
 {
 	fprintf(stdout, "%s\n", "CPU: 执行已经停止！");
 	getchar();
 }
 
-void Environment::invalid_addr(void * args)
+void Environment::invalid_addr(void* args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 地址无效！");
-	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
+	fprintf(stdout, "最后执行地址：0x%llX\n", state->_programCounter);
 	stop_exec(args);
 }
 
-void Environment::invalid_ins(void * args)
+void Environment::invalid_ins(void* args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 无法识别指令！");
-	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
+	fprintf(stdout, "最后执行地址：0x%llX\n", state->_programCounter);
 	stop_exec(args);
 }
 
-void Environment::stack_overflow(void * args)
+void Environment::stack_overflow(void* args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 栈空间溢出（Stack Overflow）！");
-	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
+	fprintf(stdout, "最后执行地址：0x%llX\n", state->_programCounter);
 	stop_exec(args);
 }
 
-void Environment::stack_underflow(void * args)
+void Environment::stack_underflow(void* args)
 {
 	auto state = static_cast<ExecutionState *>(args);
 	fprintf(stdout, "%s\n", "CPU: 栈空间向下溢出（Stack Underflow）！");
-	fprintf(stdout, "最后执行地址：0x%X\n", state->_programCounter);
+	fprintf(stdout, "最后执行地址：0x%llX\n", state->_programCounter);
 	stop_exec(args);
 }
 
@@ -55,27 +55,32 @@ Environment::~Environment()
 
 void Environment::Start()
 {
-	while (_state->_programState == PS_OK) {
+	while (_state->_programState == PS_OK)
+	{
 		ADDRESS pc = _vCPU->Execute();
 		_state->_programCounter = pc;
 		CheckState();
 	}
 	DisplayMem(START_ADDRESS, 128);
 	_vCPU->dump_regs();
-	if (_globalStateTable.find(_state->_programState) != _globalStateTable.end()) {
-		if (_globalStateTable[_state->_programState]) {
+	_vCPU->dump_stack();
+	if (_globalStateTable.find(_state->_programState) != _globalStateTable.end())
+	{
+		if (_globalStateTable[_state->_programState])
+		{
 			(this->*_globalStateTable[_state->_programState])(_state);
 		}
 	}
 }
 
-void Environment::Load(unsigned char * buffer, size_t num)
+void Environment::Load(unsigned char* buffer, size_t num)
 {
 }
 
-void Environment::SetMem(ADDRESS address, unsigned char * buffer, size_t num)
+void Environment::SetMem(ADDRESS address, unsigned char* buffer, size_t num)
 {
-	if (address + num >= MAX_MEMORY_ADDRESS || address == 0) {
+	if (address + num >= MAX_MEMORY_ADDRESS || address == 0)
+	{
 		_state->_programState = PS_ADR;
 		return;
 	}
@@ -85,14 +90,16 @@ void Environment::SetMem(ADDRESS address, unsigned char * buffer, size_t num)
 void Environment::DisplayMem(ADDRESS address, size_t num)
 {
 	fprintf(stdout, "起始地址内存空间：");
-	for (size_t i = 0; i < num; i++) {
+	for (size_t i = 0; i < num; i++)
+	{
 		if (i == 0 || i % 16 == 0)
-			fprintf(stdout, "\n0x%.8X: ", address + i);
+			fprintf(stdout, "\n0x%.8llX: ", address + i);
 		fprintf(stdout, "%.2x ", Memory[address + i]);
 	}
 	fprintf(stdout, "\n\n");
 	fflush(stdout);
 }
+
 
 void Environment::init()
 {
@@ -116,7 +123,8 @@ void Environment::init()
 
 void Environment::CheckState()
 {
-	if (_state->_programCounter >= MAX_MEMORY_ADDRESS || _state->_programCounter == 0) {
+	if (_state->_programCounter >= MAX_MEMORY_ADDRESS || _state->_programCounter == 0)
+	{
 		_state->_programState = PS_ADR;
 	}
 }

@@ -16,7 +16,7 @@ CodeGen::~CodeGen()
 	delete[] _buffer.content;
 }
 
-void CodeGen::AppendCode(ISA_OPCode code, Operand * operand)
+void CodeGen::AppendCode(ISA_OPCode code, Operand* operand)
 {
 	Code_Buffer ret;
 	if (code == IRMOVQ)
@@ -82,6 +82,12 @@ void CodeGen::AppendCode(ISA_OPCode code, Operand * operand)
 		memcpy(ret.content, &code, 1);
 		memcpy(ret.content + 1, &operand->value, 8);
 	}
+	else if (code == PUSHN || code == POPN)
+	{
+		ret = alloc_resource(5);
+		memcpy(ret.content, &code, 1);
+		memcpy(ret.content + 1, &operand->value, 4);
+	}
 	else if (code == SYSCALL)
 	{
 		ret = alloc_resource(2);
@@ -130,9 +136,8 @@ Code_Buffer CodeGen::GenerateCode()
 Code_Buffer CodeGen::alloc_resource(size_t size)
 {
 	Code_Buffer buffer;
-	unsigned char * ret = new unsigned char[size];
+	uint8_t * ret = new unsigned char[size];
 	buffer.size = size;
 	buffer.content = ret;
 	return buffer;
 }
-

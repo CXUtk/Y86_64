@@ -8,7 +8,7 @@ v_cpu::v_cpu()
 	init();
 }
 
-v_cpu::v_cpu(ExecutionState * state)
+v_cpu::v_cpu(ExecutionState* state)
 {
 	_state = state;
 	init();
@@ -23,15 +23,13 @@ ADDRESS v_cpu::Execute()
 	const ADDRESS pc = _state->_programCounter;
 	const auto code = static_cast<ISA_OPCode>(Memory[pc]);
 
-	if (_execFuncTable.find(code) != _execFuncTable.end() && _execFuncTable[code]) {
+	if (_execFuncTable.find(code) != _execFuncTable.end() && _execFuncTable[code])
+	{
 		ADDRESS addr = (this->*_execFuncTable[code])(pc, nullptr);
 		return addr;
 	}
-	else {
-		_state->_programState = PS_INS;
-		return pc;
-	}
-
+	_state->_programState = PS_INS;
+	return pc;
 }
 
 bool v_cpu::get_condition_bit(ConditionBit bit)
@@ -62,82 +60,102 @@ void v_cpu::dump_regs()
 		else if (reg == RDI)
 			strcpy_s(name, "RDI");
 
-		fprintf(stdout, "%s: 0x%.16X\n", name, _commonRegs[reg]);
+		fprintf(stdout, "%s: 0x%.16llX\n", name, _commonRegs[reg]);
 	}
-	fprintf(stdout, "%s: 0x%.16X\n", "RIP", _state->_programCounter);
+	fprintf(stdout, "%s: 0x%.16llX\n", "RIP", _state->_programCounter);
 	fprintf(stdout, "%s: 0x%.16X\n", " PS", _state->_programState);
 }
 
-ADDRESS v_cpu::Stop(ADDRESS, void * args)
+void v_cpu::dump_stack()
+{
+	const ADDRESS address = _commonRegs[RSP];
+	fprintf(stdout, "栈内存空间：");
+	for (size_t i = 0; i < 128; i++)
+	{
+		if (i == 0 || i % 16 == 0)
+			fprintf(stdout, "\n0x%.8llX: ", address + i);
+		fprintf(stdout, "%.2x ", Memory[address + i]);
+	}
+	fprintf(stdout, "\n\n");
+	fflush(stdout);
+
+}
+
+ADDRESS v_cpu::Stop(ADDRESS, void* args)
 {
 	_state->_programState = PS_HALT;
 	return _state->_programCounter + 1;
 }
 
-ADDRESS v_cpu::SysCall(ADDRESS addr, void * args)
+ADDRESS v_cpu::SysCall(ADDRESS addr, void* args)
 {
 	const auto type = static_cast<SysCall_Type>(Memory[addr + 1]);
 	switch (type)
 	{
 	case Sys_TestFunc:
-	{
-		fprintf(stdout, "%s\n", "系统调用#0，测试环境 正常");
-		break;
-	}
+		{
+			fprintf(stdout, "%s\n", "系统调用#0，测试环境 正常");
+			break;
+		}
 	case Sys_PrintA:
-	{
-		const ADDRESS target = internal_pop();
-		// 检测是否越界
-		if (target >= MAX_MEMORY_ADDRESS || target == 0) {
-			_state->_programState = PS_ADR;
-			return addr;
+		{
+			const ADDRESS target = internal_pop();
+			// 检测是否越界
+			if (target >= MAX_MEMORY_ADDRESS || target == 0)
+			{
+				_state->_programState = PS_ADR;
+				return addr;
+			}
+			fprintf(stdout, "%s\n", &Memory[target]);
+			break;
 		}
-		fprintf(stdout, "%s\n", &Memory[target]);
-		break;
-	}
 	case Sys_PrintDQ:
-	{
-		const ADDRESS target = internal_pop();
-		// 检测是否越界
-		if (target >= MAX_MEMORY_ADDRESS || target == 0) {
-			_state->_programState = PS_ADR;
+		{
+			const ADDRESS target = internal_pop();
+			// 检测是否越界
+			if (target >= MAX_MEMORY_ADDRESS || target == 0)
+			{
+				_state->_programState = PS_ADR;
+				return addr;
+			}
+			int64_t value;
+			memcpy(&value, &Memory[target], QUAD_BYTES);
+			fprintf(stdout, "%lld\n", value);
+			break;
+		}
+	case Sys_PrintAR:
+		{
+			const ISA_Register target = (ISA_Register)internal_pop();
+			fprintf(stdout, "%s\n", &Memory[_commonRegs[target]]);
+			break;
+		}
+	case Sys_PrintDR:
+		{
+			const ISA_Register target = (ISA_Register)internal_pop();
+			fprintf(stdout, "%lld\n", _commonRegs[target]);
+			break;
+		}
+	case Sys_Time:
+		{
+			_commonRegs[RAX] = time(nullptr);
+			break;
+		}
+	default:
+		{
+			_state->_programState = PS_INS;
 			return addr;
 		}
-		int64_t value;
-		memcpy(&value, &Memory[target], QUAD_BYTES);
-		fprintf(stdout, "%lld\n", value);
-		break;
-	}
-	case Sys_PrintAR: {
-		const ISA_Register target = (ISA_Register)internal_pop();
-		fprintf(stdout, "%s\n", &Memory[_commonRegs[target]]);
-		break;
-	}
-	case Sys_PrintDR: {
-		const ISA_Register target = (ISA_Register)internal_pop();
-		fprintf(stdout, "%lld\n", _commonRegs[target]);
-		break;
-	}
-	case Sys_Time:
-	{
-		_commonRegs[RAX] = time(nullptr);
-		break;
-	}
-	default:
-	{
-		_state->_programState = PS_INS;
-		return addr;
-	}
 	}
 	return addr + 2;
 }
 
-ADDRESS v_cpu::PushI(ADDRESS addr, void * args)
+ADDRESS v_cpu::PushI(ADDRESS addr, void* args)
 {
 	// 将立即数[addr + 1]推进栈中
-	_commonRegs[RSP] -= sizeof(uint64_t);
+	_commonRegs[RSP] -= MAX_ADDRESS_BYTES;
 	const ADDRESS sstop = _commonRegs[RSP];
-	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE) {
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE)
+	{
 		_state->_programState = PS_STACK_OVERFLOW;
 		return addr;
 	}
@@ -145,13 +163,29 @@ ADDRESS v_cpu::PushI(ADDRESS addr, void * args)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Push(ADDRESS addr, void *)
+ADDRESS v_cpu::PushN(ADDRESS addr, void *)
+{
+	// [addr + 1]的值是寄存器编号
+	uint32_t count;
+	memcpy(&count, &Memory[addr + 1], DWORD_BYTES);
+	_commonRegs[RSP] -= count;
+	const ADDRESS sstop = _commonRegs[RSP];
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE)
+	{
+		_state->_programState = PS_STACK_OVERFLOW;
+		return addr;
+	}
+	return addr + 1 + DWORD_BYTES;
+}
+
+ADDRESS v_cpu::Push(ADDRESS addr, void*)
 {
 	// [addr + 1]的值是寄存器编号
 	const auto reg = static_cast<ISA_Register>(Memory[addr + 1]);
 	_commonRegs[RSP] -= MAX_ADDRESS_BYTES;
 	const ADDRESS sstop = _commonRegs[RSP];
-	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE) {
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE)
+	{
 		_state->_programState = PS_STACK_OVERFLOW;
 		return addr;
 	}
@@ -159,10 +193,11 @@ ADDRESS v_cpu::Push(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Pop(ADDRESS addr, void * args)
+ADDRESS v_cpu::Pop(ADDRESS addr, void* args)
 {
 	const ADDRESS sstop = _commonRegs[RSP];
-	if (sstop >= INIT_STACK_POS) {
+	if (sstop >= INIT_STACK_POS)
+	{
 		_state->_programState = PS_STACK_UNDERFLOW;
 		return addr;
 	}
@@ -173,12 +208,27 @@ ADDRESS v_cpu::Pop(ADDRESS addr, void * args)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Nop(ADDRESS addr, void * args)
+ADDRESS v_cpu::PopN(ADDRESS addr, void *)
+{
+	uint32_t count;
+	memcpy(&count, &Memory[addr + 1], DWORD_BYTES);
+	_commonRegs[RSP] += count;
+	const ADDRESS sstop = _commonRegs[RSP];
+	if (sstop >= INIT_STACK_POS)
+	{
+		_state->_programState = PS_STACK_UNDERFLOW;
+		return addr;
+	}
+	// addr + 1 就是哪个寄存器的字节
+	return addr + 1 + DWORD_BYTES;
+}
+
+ADDRESS v_cpu::Nop(ADDRESS addr, void* args)
 {
 	return addr + 1;
 }
 
-ADDRESS v_cpu::MovQuadR2R(ADDRESS addr, void * args)
+ADDRESS v_cpu::MovQuadR2R(ADDRESS addr, void* args)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto regA = static_cast<ISA_Register>(regByte & 0xF);
@@ -187,67 +237,67 @@ ADDRESS v_cpu::MovQuadR2R(ADDRESS addr, void * args)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::MovQuadI2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovQuadI2R(ADDRESS addr, void*)
 {
 	return _internalI2R(addr, QUAD_BYTES);
 }
 
-ADDRESS v_cpu::MovDoubI2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovDoubI2R(ADDRESS addr, void*)
 {
 	return _internalI2R(addr, DWORD_BYTES);
 }
 
-ADDRESS v_cpu::MovWordI2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovWordI2R(ADDRESS addr, void*)
 {
 	return _internalI2R(addr, WORD_BYTES);
 }
 
-ADDRESS v_cpu::MovByteI2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovByteI2R(ADDRESS addr, void*)
 {
 	return _internalI2R(addr, SINGLE_BYTE);
 }
 
-ADDRESS v_cpu::MovQuadR2M(ADDRESS addr, void *)
+ADDRESS v_cpu::MovQuadR2M(ADDRESS addr, void*)
 {
 	return _internalR2M(addr, QUAD_BYTES);
 }
 
-ADDRESS v_cpu::MovDoubR2M(ADDRESS addr, void *)
+ADDRESS v_cpu::MovDoubR2M(ADDRESS addr, void*)
 {
 	return _internalR2M(addr, DWORD_BYTES);
 }
 
-ADDRESS v_cpu::MovWordR2M(ADDRESS addr, void *)
+ADDRESS v_cpu::MovWordR2M(ADDRESS addr, void*)
 {
 	return _internalR2M(addr, WORD_BYTES);
 }
 
-ADDRESS v_cpu::MovByteR2M(ADDRESS addr, void *)
+ADDRESS v_cpu::MovByteR2M(ADDRESS addr, void*)
 {
 	return _internalR2M(addr, SINGLE_BYTE);
 }
 
-ADDRESS v_cpu::MovQuadM2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovQuadM2R(ADDRESS addr, void*)
 {
 	return _internalM2R(addr, QUAD_BYTES);
 }
 
-ADDRESS v_cpu::MovDoubM2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovDoubM2R(ADDRESS addr, void*)
 {
 	return _internalM2R(addr, DWORD_BYTES);
 }
 
-ADDRESS v_cpu::MovWordM2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovWordM2R(ADDRESS addr, void*)
 {
 	return _internalM2R(addr, WORD_BYTES);
 }
 
-ADDRESS v_cpu::MovByteM2R(ADDRESS addr, void *)
+ADDRESS v_cpu::MovByteM2R(ADDRESS addr, void*)
 {
 	return _internalM2R(addr, SINGLE_BYTE);
 }
 
-ADDRESS v_cpu::Op_add(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_add(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -260,7 +310,7 @@ ADDRESS v_cpu::Op_add(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_sub(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_sub(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -273,7 +323,7 @@ ADDRESS v_cpu::Op_sub(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_mul(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_mul(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -287,7 +337,7 @@ ADDRESS v_cpu::Op_mul(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_div(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_div(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -306,7 +356,7 @@ ADDRESS v_cpu::Op_div(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_and(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_and(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -318,7 +368,7 @@ ADDRESS v_cpu::Op_and(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_or(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_or(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -330,7 +380,7 @@ ADDRESS v_cpu::Op_or(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_not(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_not(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
@@ -339,7 +389,7 @@ ADDRESS v_cpu::Op_not(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_xor(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_xor(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -351,7 +401,7 @@ ADDRESS v_cpu::Op_xor(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_shr(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_shr(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -363,7 +413,7 @@ ADDRESS v_cpu::Op_shr(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_shl(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_shl(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -375,7 +425,7 @@ ADDRESS v_cpu::Op_shl(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_inc(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_inc(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
@@ -384,7 +434,7 @@ ADDRESS v_cpu::Op_inc(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_dec(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_dec(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
@@ -393,7 +443,7 @@ ADDRESS v_cpu::Op_dec(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_neg(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_neg(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
@@ -402,7 +452,7 @@ ADDRESS v_cpu::Op_neg(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_cmp(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_cmp(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte & 0xF);
@@ -414,7 +464,7 @@ ADDRESS v_cpu::Op_cmp(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Op_test(ADDRESS addr, void *)
+ADDRESS v_cpu::Op_test(ADDRESS addr, void*)
 {
 	const unsigned char regByte = Memory[addr + 1];
 	auto reg_a = static_cast<ISA_Register>(regByte);
@@ -423,13 +473,12 @@ ADDRESS v_cpu::Op_test(ADDRESS addr, void *)
 	return addr + 2;
 }
 
-ADDRESS v_cpu::Jmp(ADDRESS addr, void *)
+ADDRESS v_cpu::Jmp(ADDRESS addr, void*)
 {
 	return _internalJMP(addr);
-
 }
 
-ADDRESS v_cpu::Jle(ADDRESS addr, void *)
+ADDRESS v_cpu::Jle(ADDRESS addr, void*)
 {
 	const bool SF = get_condition_bit(CC_SIGN);
 	const bool OF = get_condition_bit(CC_OVERFLOW);
@@ -441,7 +490,7 @@ ADDRESS v_cpu::Jle(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Jl(ADDRESS addr, void *)
+ADDRESS v_cpu::Jl(ADDRESS addr, void*)
 {
 	const bool SF = get_condition_bit(CC_SIGN);
 	const bool OF = get_condition_bit(CC_OVERFLOW);
@@ -452,7 +501,7 @@ ADDRESS v_cpu::Jl(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Je(ADDRESS addr, void *)
+ADDRESS v_cpu::Je(ADDRESS addr, void*)
 {
 	const bool ZF = get_condition_bit(CC_ZERO);
 	if (ZF)
@@ -462,7 +511,7 @@ ADDRESS v_cpu::Je(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Jne(ADDRESS addr, void *)
+ADDRESS v_cpu::Jne(ADDRESS addr, void*)
 {
 	const bool ZF = get_condition_bit(CC_ZERO);
 	if (!ZF)
@@ -472,7 +521,7 @@ ADDRESS v_cpu::Jne(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Jge(ADDRESS addr, void *)
+ADDRESS v_cpu::Jge(ADDRESS addr, void*)
 {
 	const bool SF = get_condition_bit(CC_SIGN);
 	const bool OF = get_condition_bit(CC_OVERFLOW);
@@ -483,7 +532,7 @@ ADDRESS v_cpu::Jge(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Jg(ADDRESS addr, void *)
+ADDRESS v_cpu::Jg(ADDRESS addr, void*)
 {
 	const bool SF = get_condition_bit(CC_SIGN);
 	const bool OF = get_condition_bit(CC_OVERFLOW);
@@ -495,11 +544,12 @@ ADDRESS v_cpu::Jg(ADDRESS addr, void *)
 	return addr + 1 + MAX_ADDRESS_BYTES;
 }
 
-ADDRESS v_cpu::Call(ADDRESS addr, void *)
+ADDRESS v_cpu::Call(ADDRESS addr, void*)
 {
 	ADDRESS target;
 	memcpy(&target, &Memory[addr + 1], MAX_ADDRESS_BYTES);
-	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+	if (target >= MAX_MEMORY_ADDRESS || target == 0)
+	{
 		_state->_programState = PS_ADR;
 		return addr;
 	}
@@ -509,14 +559,15 @@ ADDRESS v_cpu::Call(ADDRESS addr, void *)
 	return target;
 }
 
-ADDRESS v_cpu::Ret(ADDRESS addr, void *)
+ADDRESS v_cpu::Ret(ADDRESS addr, void*)
 {
 	// 弹出预留栈空间
 	internal_pop();
 
 	// 真实跳转地址
 	const ADDRESS target = internal_pop();
-	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+	if (target >= MAX_MEMORY_ADDRESS || target == 0)
+	{
 		_state->_programState = PS_ADR;
 		return addr;
 	}
@@ -527,7 +578,8 @@ uint64_t v_cpu::internal_pop()
 {
 	const ADDRESS sstop = _commonRegs[RSP];
 	// 栈溢出检测
-	if (sstop >= INIT_STACK_POS) {
+	if (sstop >= INIT_STACK_POS)
+	{
 		_state->_programState = PS_STACK_UNDERFLOW;
 	}
 	// addr + 1 就是哪个寄存器的字节
@@ -542,7 +594,8 @@ void v_cpu::internal_push(uint64_t value)
 	_commonRegs[RSP] -= sizeof(uint64_t);
 	const ADDRESS sstop = _commonRegs[RSP];
 	// 栈溢出检测
-	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE) {
+	if (sstop < INIT_STACK_POS - MAX_STACK_SIZE)
+	{
 		_state->_programState = PS_STACK_OVERFLOW;
 		return;
 	}
@@ -555,8 +608,11 @@ void v_cpu::init()
 	_commonRegs[RSP] = INIT_STACK_POS;
 	_execFuncTable.insert(std::make_pair(SYSCALL, &v_cpu::SysCall));
 	_execFuncTable.insert(std::make_pair(PUSHI, &v_cpu::PushI));
+	_execFuncTable.insert(std::make_pair(PUSHN, &v_cpu::PushN));
+	_execFuncTable.insert(std::make_pair(RET, &v_cpu::Ret));
 	_execFuncTable.insert(std::make_pair(PUSH, &v_cpu::Push));
 	_execFuncTable.insert(std::make_pair(POP, &v_cpu::Pop));
+	_execFuncTable.insert(std::make_pair(POPN, &v_cpu::PopN));
 	_execFuncTable.insert(std::make_pair(STOP, &v_cpu::Stop));
 	_execFuncTable.insert(std::make_pair(NOP, &v_cpu::Nop));
 	_execFuncTable.insert(std::make_pair(RRMOV, &v_cpu::MovQuadR2R));
@@ -600,13 +656,14 @@ void v_cpu::init()
 
 void v_cpu::set_condition_bit(ConditionBit bit, bool value)
 {
-	if (value) {
-		const uint64_t mask = 1 << bit;
+	if (value)
+	{
+		const uint32_t mask = 1 << bit;
 		_state->_conditionCode |= mask;
 	}
 	else
 	{
-		const uint64_t mask = ~(1 << bit);
+		const uint32_t mask = ~(1 << bit);
 		_state->_conditionCode &= mask;
 	}
 }
@@ -629,7 +686,8 @@ ADDRESS v_cpu::_internalR2M(ADDRESS addr, size_t size)
 	ADDRESS val;
 	memcpy(&val, &Memory[addr + 2], MAX_ADDRESS_BYTES);
 	const ADDRESS target = val + _commonRegs[reg_b];
-	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+	if (target >= MAX_MEMORY_ADDRESS || target == 0)
+	{
 		_state->_programState = PS_ADR;
 		return addr;
 	}
@@ -647,7 +705,8 @@ ADDRESS v_cpu::_internalM2R(ADDRESS addr, size_t size)
 	ADDRESS val;
 	memcpy(&val, &Memory[addr + 2], MAX_ADDRESS_BYTES);
 	const ADDRESS target = val + _commonRegs[reg_b];
-	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+	if (target >= MAX_MEMORY_ADDRESS || target == 0)
+	{
 		_state->_programState = PS_ADR;
 		return addr;
 	}
@@ -673,7 +732,8 @@ ADDRESS v_cpu::_internalJMP(ADDRESS addr)
 	// 跳转到指令结束位置+偏移位置
 	const ADDRESS target = _state->_programCounter + offset + 1 + 8;
 
-	if (target >= MAX_MEMORY_ADDRESS || target == 0) {
+	if (target >= MAX_MEMORY_ADDRESS || target == 0)
+	{
 		_state->_programState = PS_ADR;
 		return addr;
 	}
