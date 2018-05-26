@@ -7,9 +7,7 @@
 
 #define INS_BUFFER_SIZE 30
 #define TOTAL_BUFFER_SIZE 45
-//gggggggggggggggggggsasssssssssssss
 
-//iohuhiu
 FILE * myFile = nullptr;
 unsigned char * code_seg = nullptr;
 ObjectFileHeader header;
