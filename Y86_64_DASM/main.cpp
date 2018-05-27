@@ -32,6 +32,7 @@ int open_read(char * filename) {
 		fprintf(stderr, "´úÂë¶Î¶ÁÈ¡Ê§°Ü!\n");
 		return -1;
 	}
+	return 0;
 }
 
 int close() {
