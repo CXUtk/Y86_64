@@ -95,7 +95,7 @@ int write()
 
 int main(int argc, char* argv[])
 {
-	if(open("test.asm") != -1)
+	if(open(argv[1]) != -1)
 	{
 		read();
 		close();
