@@ -1,9 +1,11 @@
 #ifndef Y86_64_VCPU_H
 #define Y86_64_VCPU_H
 #include <unordered_map>
+#include <memory>
 
 #include "ISA.h"
 #include "ExecutionState.h"
+#include "Heap.h"
 
 class v_cpu;
 
@@ -21,9 +23,11 @@ public:
 	bool get_condition_bit(ConditionBit bit);
 	void dump_regs();
 	void dump_stack();
+	void dump_heap();
 private:
 	Reg_Value			_commonRegs[NUM_OF_REGISTER + 1];
 	ExecutionState *	_state;
+	std::shared_ptr<Heap> _heapStruct;
 
 	std::unordered_map<ISA_OPCode, Exex_func>		_execFuncTable;
 

@@ -35,6 +35,9 @@
     <ClInclude Include="Utils.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Heap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -53,6 +56,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Heap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

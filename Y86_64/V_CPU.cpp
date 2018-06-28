@@ -81,6 +81,21 @@ void v_cpu::dump_stack()
 
 }
 
+void v_cpu::dump_heap()
+{
+	const ADDRESS address = INIT_HEAP_POS;
+	fprintf(stdout, "堆内存空间：");
+	for (size_t i = 0; i < 128; i++)
+	{
+		if (i == 0 || i % 16 == 0)
+			fprintf(stdout, "\n0x%.8llX: ", address + i);
+		fprintf(stdout, "%.2x ", Memory[address + i]);
+	}
+	fprintf(stdout, "\n\n");
+	fflush(stdout);
+
+}
+
 ADDRESS v_cpu::Stop(ADDRESS, void* args)
 {
 	_state->_programState = PS_HALT;
@@ -93,58 +108,71 @@ ADDRESS v_cpu::SysCall(ADDRESS addr, void* args)
 	switch (type)
 	{
 	case Sys_TestFunc:
-		{
-			fprintf(stdout, "%s\n", "系统调用#0，测试环境 正常");
-			break;
-		}
+	{
+		fprintf(stdout, "%s\n", "系统调用#0，测试环境 正常");
+		break;
+	}
 	case Sys_PrintA:
+	{
+		const ADDRESS target = internal_pop();
+		// 检测是否越界
+		if (target >= MAX_MEMORY_ADDRESS || target == 0)
 		{
-			const ADDRESS target = internal_pop();
-			// 检测是否越界
-			if (target >= MAX_MEMORY_ADDRESS || target == 0)
-			{
-				_state->_programState = PS_ADR;
-				return addr;
-			}
-			fprintf(stdout, "%s\n", &Memory[target]);
-			break;
-		}
-	case Sys_PrintDQ:
-		{
-			const ADDRESS target = internal_pop();
-			// 检测是否越界
-			if (target >= MAX_MEMORY_ADDRESS || target == 0)
-			{
-				_state->_programState = PS_ADR;
-				return addr;
-			}
-			int64_t value;
-			memcpy(&value, &Memory[target], QUAD_BYTES);
-			fprintf(stdout, "%lld\n", value);
-			break;
-		}
-	case Sys_PrintAR:
-		{
-			const ISA_Register target = (ISA_Register)internal_pop();
-			fprintf(stdout, "%s\n", &Memory[_commonRegs[target]]);
-			break;
-		}
-	case Sys_PrintDR:
-		{
-			const ISA_Register target = (ISA_Register)internal_pop();
-			fprintf(stdout, "%lld\n", _commonRegs[target]);
-			break;
-		}
-	case Sys_Time:
-		{
-			_commonRegs[RAX] = time(nullptr);
-			break;
-		}
-	default:
-		{
-			_state->_programState = PS_INS;
+			_state->_programState = PS_ADR;
 			return addr;
 		}
+		fprintf(stdout, "%s\n", &Memory[target]);
+		break;
+	}
+	case Sys_PrintDQ:
+	{
+		const ADDRESS target = internal_pop();
+		// 检测是否越界
+		if (target >= MAX_MEMORY_ADDRESS || target == 0)
+		{
+			_state->_programState = PS_ADR;
+			return addr;
+		}
+		int64_t value;
+		memcpy(&value, &Memory[target], QUAD_BYTES);
+		fprintf(stdout, "%lld\n", value);
+		break;
+	}
+	case Sys_PrintAR:
+	{
+		const ISA_Register target = (ISA_Register)internal_pop();
+		fprintf(stdout, "%s\n", &Memory[_commonRegs[target]]);
+		break;
+	}
+	case Sys_PrintDR:
+	{
+		const ISA_Register target = (ISA_Register)internal_pop();
+		fprintf(stdout, "%lld\n", _commonRegs[target]);
+		break;
+	}
+	case Sys_Time:
+	{
+		_commonRegs[RAX] = time(nullptr);
+		break;
+	}
+	case Sys_Malloc:
+	{
+		size_t size = (size_t)internal_pop();
+		ADDRESS addr = _heapStruct->Malloc(size);
+		_commonRegs[RAX] = addr;
+		break;
+	}
+	case Sys_Free:
+	{
+		ADDRESS addr = internal_pop();
+		_heapStruct->Free(addr);
+		break;
+	}
+	default:
+	{
+		_state->_programState = PS_INS;
+		return addr;
+	}
 	}
 	return addr + 2;
 }
@@ -652,6 +680,8 @@ void v_cpu::init()
 	_execFuncTable.insert(std::make_pair(JGE, &v_cpu::Jge));
 	_execFuncTable.insert(std::make_pair(CALL, &v_cpu::Call));
 	_execFuncTable.insert(std::make_pair(RET, &v_cpu::Ret));
+
+	_heapStruct.reset(new Heap());
 }
 
 void v_cpu::set_condition_bit(ConditionBit bit, bool value)

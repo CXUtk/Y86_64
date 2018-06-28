@@ -29,6 +29,7 @@ const ADDRESS MAX_STACK_SIZE = 0x04000;
 // 堆的位置
 const ADDRESS INIT_HEAP_POS = 0xA0000;
 const ADDRESS MAX_HEAP_SIZE = 0x20000;
+const int HEAP_CHUNK_SIZE = 4096;
 
 // 汇编代码解析符号常量
 const char POS_INDICATION_TOKEN[] = ".pos";
@@ -169,8 +170,11 @@ enum SysCall_Type
 	// 功能： 获取当前系统时间
 	Sys_Time = 0x30,
 	// 参数1：分配内存字节大小
-	// 功能： 在堆中分配指定大小的内存，返回指向内存区域的指针
+	// 功能： 在堆中分配指定大小的内存，RAX返回指向内存区域的指针
 	Sys_Malloc = 0x40,
+	// 参数1：Malloc返回的内存起始地址指针
+	// 功能： 在堆中释放之前分配过的内存
+	Sys_Free = 0x41,
 };
 
 enum ConditionBit
