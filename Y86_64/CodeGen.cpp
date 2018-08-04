@@ -13,7 +13,6 @@ CodeGen::~CodeGen()
 	{
 		delete[] buf.content;
 	}
-	delete[] _buffer.content;
 }
 
 void CodeGen::AppendCode(ISA_OPCode code, Operand* operand)

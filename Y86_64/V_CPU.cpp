@@ -85,11 +85,16 @@ void v_cpu::dump_heap()
 {
 	const ADDRESS address = INIT_HEAP_POS;
 	fprintf(stdout, "¶ÑÄÚ´æ¿Õ¼ä£º");
-	for (size_t i = 0; i < 128; i++)
+	for (size_t i = 0; i < 256; i++)
 	{
 		if (i == 0 || i % 16 == 0)
 			fprintf(stdout, "\n0x%.8llX: ", address + i);
 		fprintf(stdout, "%.2x ", Memory[address + i]);
+	}
+	fprintf(stdout, "\n\n");
+	fprintf(stdout, "%s\n", "¶ÑÇøÓòÃèÊö£º");
+	for (auto str : _heapStruct->getBlockDesc()) {
+		fprintf(stdout, "%s\n", str.c_str());
 	}
 	fprintf(stdout, "\n\n");
 	fflush(stdout);

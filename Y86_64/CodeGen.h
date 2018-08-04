@@ -25,6 +25,13 @@ public:
 
 	// 从Debug缓冲区中把指令代码全部提取出来
 	Code_Buffer GenerateCode();
+	int getSize() { 
+		int i = 0;
+		for (auto buf : _codeBufferList) {
+			i += buf.size;
+		}
+		return i;
+	}
 
 private:
 	std::vector<Code_Buffer> _codeBufferList;

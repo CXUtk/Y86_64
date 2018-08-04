@@ -118,6 +118,8 @@ enum ISA_OPCode
 	// 执行系统调用
 	// 1 + 1（功能）
 	SYSCALL = 0xC0,
+
+	ERR = 0xFF,
 };
 
 // Y86_64 寄存器代码

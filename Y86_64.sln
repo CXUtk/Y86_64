@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Y86_64_DASM", "Y86_64_DASM\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Y86_64_Linker", "Y86_64_Linker\Y86_64_Linker.vcxproj", "{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Y86_Compiler", "Y86_Compiler\Y86_Compiler.vcxproj", "{E2023226-99F1-415F-83DD-0BFEF9C27C09}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,14 @@ Global
 		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x64.Build.0 = Release|x64
 		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x86.ActiveCfg = Release|Win32
 		{0BE4D49F-F155-47BB-AFDD-03E25586F2F5}.Release|x86.Build.0 = Release|Win32
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Debug|x64.ActiveCfg = Debug|x64
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Debug|x64.Build.0 = Debug|x64
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Debug|x86.ActiveCfg = Debug|Win32
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Debug|x86.Build.0 = Debug|Win32
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Release|x64.ActiveCfg = Release|x64
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Release|x64.Build.0 = Release|x64
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Release|x86.ActiveCfg = Release|Win32
+		{E2023226-99F1-415F-83DD-0BFEF9C27C09}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

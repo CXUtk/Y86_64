@@ -119,7 +119,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "%s, 0x%X(%s)", nameA, val, nameB);
+		sprintf(str, "%s, ", nameA);
+		sprintf(str + strlen(str), "0x%X(", val);
+		sprintf(str + strlen(str), "%s)", nameB);
 		break;
 	}
 	case RMMOVD:
@@ -131,9 +133,11 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		char nameB[4];
 		get_reg_name(nameA, (ISA_Register)operand.regA);
 		get_reg_name(nameB, (ISA_Register)operand.regB);
-		ADDRESS val;
+		ADDRESS val = 0;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "%s, 0x%X(%s)", nameA, val, nameB);
+		sprintf(str, "%s, ", nameA);
+		sprintf(str + strlen(str), "0x%X(", val);
+		sprintf(str + strlen(str), "%s)", nameB);
 		break;
 	}
 	case RMMOVW:
@@ -147,7 +151,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "%s, 0x%X(%s)", nameA, val, nameB);
+		sprintf(str, "%s, ", nameA);
+		sprintf(str + strlen(str), "0x%X(", val);
+		sprintf(str + strlen(str), "%s)", nameB);
 		break;
 	}
 	case RMMOVB:
@@ -161,7 +167,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "%s, 0x%X(%s)", nameA, val, nameB);
+		sprintf(str, "%s, ", nameA);
+		sprintf(str + strlen(str), "0x%X(", val);
+		sprintf(str + strlen(str), "%s)", nameB);
 		break;
 	}
 	case MRMOVQ:
@@ -175,7 +183,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "0x%X(%s), %s", nameB, val, nameA);
+		sprintf(str, "0x%X", val);
+		sprintf(str + strlen(str), "(%s", nameB);
+		sprintf(str + strlen(str), "), %s", nameA);
 		break;
 	}
 	case MRMOVD:
@@ -189,7 +199,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "0x%X(%s), %s", nameB, val, nameA);
+		sprintf(str, "0x%X", val);
+		sprintf(str + strlen(str), "(%s", nameB);
+		sprintf(str + strlen(str), "), %s", nameA);
 		break;
 	}
 	case MRMOVW:
@@ -203,7 +215,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "0x%X(%s), %s", nameB, val, nameA);
+		sprintf(str, "0x%X", val);
+		sprintf(str + strlen(str), "(%s", nameB);
+		sprintf(str + strlen(str), "), %s", nameA);
 		break;
 	}
 	case MRMOVB:
@@ -217,7 +231,9 @@ void get_ins_operand(char str[INS_BUFFER_SIZE], ADDRESS addr)
 		get_reg_name(nameB, (ISA_Register)operand.regB);
 		ADDRESS val;
 		memcpy(&val, &code_seg[addr + 2], MAX_ADDRESS_BYTES);
-		sprintf(str, "0x%X(%s), %s", nameB, val, nameA);
+		sprintf(str, "0x%X", val);
+		sprintf(str + strlen(str), "(%s", nameB);
+		sprintf(str + strlen(str), "), %s", nameA);
 		break;
 	}
 	case OP_ADD:
@@ -354,7 +370,7 @@ ADDRESS nextIns(ADDRESS addr) {
 
 void parse() {
 	ADDRESS pos = 0;
-	while (pos <= header.code_size) {
+	while (pos < header.code_size) {
 		ADDRESS offset = nextIns(pos);
 		pos += offset;
 	}
@@ -364,6 +380,7 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2) {
 		fprintf(stderr, "用法: Y86_64_DASM <文件名>\n");
+		getchar();
 		return 0;
 	}
 	if (open_read(argv[1]) != -1) {

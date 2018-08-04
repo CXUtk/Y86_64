@@ -21,7 +21,7 @@ void get_reg_name(char name[4], ISA_Register reg)
 	else if (reg == RDI)
 		strcpy_s(name, 4, "RDI");
 	else
-		strcpy_s(name, 4, "XXX");
+		strcpy_s(name, 4, "0");
 }
 
 void get_ins_name(char name[8], ISA_OPCode code)
@@ -50,16 +50,16 @@ void get_ins_name(char name[8], ISA_OPCode code)
 		strcpy_s(name, 8, "IRMOVB");
 		break;
 	case RMMOVQ:
-		strcpy_s(name, 8, "RRMOVQ");
+		strcpy_s(name, 8, "RMMOVQ");
 		break;
 	case RMMOVD:
-		strcpy_s(name, 8, "RRMOVD");
+		strcpy_s(name, 8, "RMMOVD");
 		break;
 	case RMMOVW:
-		strcpy_s(name, 8, "RRMOVW");
+		strcpy_s(name, 8, "RMMOVW");
 		break;
 	case RMMOVB:
-		strcpy_s(name, 8, "RRMOVB");
+		strcpy_s(name, 8, "RMMOVB");
 		break;
 	case MRMOVQ:
 		strcpy_s(name, 8, "MRMOVQ");

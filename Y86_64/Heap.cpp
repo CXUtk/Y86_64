@@ -99,6 +99,22 @@ ADDRESS Heap::Malloc(size_t size)
 	return blockp;
 }
 
+std::vector<std::string> Heap::getBlockDesc() const
+{
+	std::vector<std::string> result;
+	ADDRESS bp;
+	int index = 1;
+	for (bp = _heapListp; getSize(bp) > 0 && bp < _brk; bp = nextBlock(bp)) { 
+		char buf[200];
+		sprintf_s(buf, "区块#%d - 地址：0x%.8llX 是否分配：%s 大小：%d",
+			index, bp, isAllocated(bp) ? "是" : "否", getSize(bp));
+		std::string str(buf);
+		result.push_back(str);
+		index++;
+	}
+	return result;
+}
+
 ADDRESS Heap::sbrk(int incr)
 {
 	ADDRESS oldbrk = _brk;

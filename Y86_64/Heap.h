@@ -2,6 +2,8 @@
 #define Y86_64_HEAP_H
 #include "ISA.h"
 #include "ExecutionState.h"
+#include <vector>
+#include <string>
 class Heap
 {
 public:
@@ -9,6 +11,7 @@ public:
 	~Heap();
 	void Free(ADDRESS addr);
 	ADDRESS Malloc(size_t size);
+	std::vector<std::string> getBlockDesc() const;
 
 private:
 	ADDRESS _brk;

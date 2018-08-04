@@ -1,9 +1,11 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
-#include "../Y86_64/ISA.h"
 #include <setjmp.h>
+
+
+#include "Parser.h"
+#include "../Y86_64/ISA.h"
 #include "../Y86_64/CodeGen.h"
 
 #define MAX_LINE_NUM 256
@@ -12,6 +14,8 @@
 FILE * textFile = nullptr;
 FILE * writeFile = nullptr;
 Code_Buffer out_buffer;
+
+
 int lineNum;
 
 typedef struct {
@@ -52,6 +56,8 @@ void read()
 	lines = (StrLine *) malloc(sizeof(StrLine) * lineNum);
 	while(fgets(line, MAX_LINE_NUM, textFile) != nullptr)
 	{
+		if(line[strlen(line) - 1] == '\n')
+			line[strlen(line) - 1] = '\0';
 		lines[count].str = (char *)malloc(sizeof(line) + 1);
 		strcpy_s(lines[count].str, MAX_LINE_NUM, line);
 		lines[count].strlen = strlen(line);
@@ -67,16 +73,20 @@ void close()
 
 void parse()
 {
-	CodeGen code_gen;
+
+	Parser parser;
 	// TODO: 你的代码位置
 
 	for(int i = 0; i < lineNum; i++)
 	{
 		char * target = lines[i].str;
+		parser.Run(target);
+
+		printf("%s\n", target);
 	}
 
 
-	out_buffer = code_gen.GenerateCode();
+	out_buffer = parser.getCode();
 }
 
 int write()
@@ -86,9 +96,11 @@ int write()
 		return -1;
 	}
 	ObjectFileHeader header;
-	// TODO: 你的代码位置
-
+	header.type_identifier = MAGIC_NUMBER;
+	header.code_seg_offset = sizeof(header);
+	header.code_size = out_buffer.size;
 	fwrite(&header, sizeof(ObjectFileHeader), 1, writeFile);
+	fwrite(out_buffer.content, out_buffer.size, 1, writeFile);
 	fclose(writeFile);
 	return 0;
 }
@@ -100,7 +112,7 @@ int main(int argc, char* argv[])
 		read();
 		close();
 		parse();
-		//write();
+		write();
 		for (int i = 0; i < lineNum; i++)
 		{
 			free(lines[i].str);
@@ -108,5 +120,6 @@ int main(int argc, char* argv[])
 		free(lines);
 		getchar();
 	}
+	delete[] out_buffer.content;
 	return 0;
 }
